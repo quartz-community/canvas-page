@@ -47,6 +47,23 @@ function initCanvas() {
 
     if (enableInteraction) {
       function onWheel(e) {
+        // If the wheel target is inside a scrollable text node, let it scroll naturally
+        const scrollable = e.target.closest(".canvas-node-content");
+        if (scrollable) {
+          const canScroll = scrollable.scrollHeight > scrollable.clientHeight;
+          if (canScroll) {
+            const atTop = scrollable.scrollTop <= 0;
+            const atBottom =
+              scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
+            const scrollingDown = e.deltaY > 0;
+            const scrollingUp = e.deltaY < 0;
+            // Only let it through to zoom if at boundary AND scrolling past it
+            if (!(atTop && scrollingUp) && !(atBottom && scrollingDown)) {
+              return; // Let the browser scroll the text node
+            }
+          }
+        }
+
         e.preventDefault();
         const rect = container.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -63,7 +80,7 @@ function initCanvas() {
 
       function onPointerDown(e) {
         if (e.button !== 0) return;
-        if (e.target.closest("a")) return;
+        if (e.target.closest("a") || e.target.closest("button")) return;
         isPanning = true;
         startX = e.clientX - panX;
         startY = e.clientY - panY;
