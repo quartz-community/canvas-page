@@ -6,8 +6,31 @@ import type {
 } from "@quartz-community/types";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { micromark } from "micromark";
+import { gfm, gfmHtml } from "micromark-extension-gfm";
 import CanvasBody from "./components/CanvasBody";
 import type { CanvasData, CanvasPageOptions } from "./types";
+
+function renderMarkdown(text: string): string {
+  return micromark(text, {
+    extensions: [gfm()],
+    htmlExtensions: [gfmHtml()],
+  });
+}
+
+function preprocessCanvasData(
+  data: CanvasData,
+): CanvasData & { renderedTexts: Record<string, string> } {
+  const renderedTexts: Record<string, string> = {};
+
+  for (const node of data.nodes ?? []) {
+    if (node.type === "text" && node.text) {
+      renderedTexts[node.id] = renderMarkdown(node.text);
+    }
+  }
+
+  return { ...data, renderedTexts };
+}
 
 const canvasMatcher: PageMatcher = ({ fileData }) => {
   return "canvasData" in fileData;
@@ -36,13 +59,14 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
 
       const slug = filePath.replace(/\.canvas$/, "") as unknown as FullSlug;
       const baseName = slug.split("/").pop() ?? "Canvas";
+      const processedData = preprocessCanvasData(canvasData);
 
       virtualPages.push({
         slug,
         title: baseName,
         data: {
           frontmatter: { title: baseName, tags: [] },
-          canvasData,
+          canvasData: processedData,
           canvasOptions: opts,
         },
       });

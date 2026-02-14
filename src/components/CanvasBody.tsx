@@ -33,7 +33,7 @@ function getEdgeAnchor(node: CanvasNode, side: string | undefined): { x: number;
   }
 }
 
-function renderNode(node: CanvasNode): unknown {
+function renderNode(node: CanvasNode, renderedTexts: Record<string, string>): unknown {
   const color = resolveColor(node.color);
   const baseStyle: Record<string, string> = {
     left: `${node.x}px`,
@@ -50,12 +50,18 @@ function renderNode(node: CanvasNode): unknown {
     .join(";");
 
   switch (node.type) {
-    case "text":
+    case "text": {
+      const html = renderedTexts[node.id];
       return (
         <div class="canvas-node canvas-node-text" data-node-id={node.id} style={styleStr}>
-          <div class="canvas-node-content">{node.text}</div>
+          {html ? (
+            <div class="canvas-node-content" dangerouslySetInnerHTML={{ __html: html }} />
+          ) : (
+            <div class="canvas-node-content">{node.text}</div>
+          )}
         </div>
       );
+    }
 
     case "file":
       return (
@@ -172,7 +178,9 @@ function renderEdge(edge: CanvasEdge, nodeMap: Map<string, CanvasNode>): unknown
 export default ((userOpts?: CanvasPageOptions) => {
   const Component: QuartzComponent = (props: QuartzComponentProps) => {
     const fileData = props.fileData as Record<string, unknown>;
-    const canvasData = fileData.canvasData as CanvasData | undefined;
+    const canvasData = fileData.canvasData as
+      | (CanvasData & { renderedTexts?: Record<string, string> })
+      | undefined;
 
     if (!canvasData) {
       return (
@@ -184,6 +192,7 @@ export default ((userOpts?: CanvasPageOptions) => {
 
     const nodes = canvasData.nodes ?? [];
     const edges = canvasData.edges ?? [];
+    const renderedTexts = canvasData.renderedTexts ?? {};
 
     const nodeMap = new Map<string, CanvasNode>();
     for (const node of nodes) {
@@ -270,7 +279,7 @@ export default ((userOpts?: CanvasPageOptions) => {
               class="canvas-nodes"
               style={`transform:translate(${-minX + padding}px,${-minY + padding}px)`}
             >
-              {nodes.map((node) => renderNode(node))}
+              {nodes.map((node) => renderNode(node, renderedTexts))}
             </div>
             <svg
               class="canvas-edges"
