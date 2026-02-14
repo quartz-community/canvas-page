@@ -73,7 +73,7 @@ function renderNode(
       const embedded = embeddedContent[node.id];
       return (
         <div class="canvas-node canvas-node-file" data-node-id={node.id} style={styleStr}>
-          <div class="canvas-node-title-bar">
+          <div class="canvas-file-label">
             <a
               href={`/${node.file.replace(/\.md$/, "")}`}
               class="canvas-file-link internal"
@@ -290,41 +290,6 @@ export default ((userOpts?: CanvasPageOptions) => {
           data-default-fullscreen={defaultFullscreen.toString()}
         >
           <div class="canvas-controls">
-            <button class="canvas-zoom-in" type="button" aria-label="Zoom in">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                <line x1="11" y1="8" x2="11" y2="14" />
-                <line x1="8" y1="11" x2="14" y2="11" />
-              </svg>
-            </button>
-            <button class="canvas-zoom-out" type="button" aria-label="Zoom out">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                <line x1="8" y1="11" x2="14" y2="11" />
-              </svg>
-            </button>
             <button
               class="canvas-reset-view"
               type="button"
@@ -346,6 +311,43 @@ export default ((userOpts?: CanvasPageOptions) => {
                 <path d="M3 3v5h5" />
               </svg>
             </button>
+            <div class="canvas-zoom-group">
+              <button class="canvas-zoom-in" type="button" aria-label="Zoom in">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  <line x1="11" y1="8" x2="11" y2="14" />
+                  <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
+              </button>
+              <button class="canvas-zoom-out" type="button" aria-label="Zoom out">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
+              </button>
+            </div>
             <button class="canvas-fullscreen-toggle" type="button" aria-label="Toggle fullscreen">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

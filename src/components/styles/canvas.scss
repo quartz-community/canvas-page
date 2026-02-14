@@ -80,32 +80,6 @@
   }
 }
 
-.canvas-node-title-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: color-mix(in srgb, var(--canvas-node-color, var(--lightgray)) 15%, var(--light));
-  border-bottom: 1px solid var(--canvas-node-color, var(--lightgray));
-  font-size: 0.85rem;
-  font-weight: 500;
-  flex-shrink: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-
-  a {
-    color: var(--secondary);
-    text-decoration: none;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-}
-
 .canvas-node-content {
   padding: 12px;
   font-size: 0.9rem;
@@ -124,22 +98,44 @@
 }
 
 .canvas-node-file {
-  .canvas-node-title-bar {
-    .canvas-file-link {
-      display: flex;
+  overflow: visible;
+
+  .canvas-file-label {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    a {
+      color: var(--canvas-node-color, var(--secondary));
+      text-decoration: none;
+      display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
 
       &::before {
         content: "";
         display: inline-block;
-        width: 14px;
-        height: 14px;
-        background: var(--secondary);
+        width: 12px;
+        height: 12px;
+        background: var(--canvas-node-color, var(--secondary));
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3C/svg%3E");
         mask-size: contain;
         mask-repeat: no-repeat;
         flex-shrink: 0;
+      }
+
+      &:hover {
+        text-decoration: underline;
       }
     }
   }
@@ -325,6 +321,7 @@
   bottom: 12px;
   right: 12px;
   display: flex;
+  flex-direction: column;
   gap: 4px;
   z-index: 10;
 
@@ -344,6 +341,23 @@
 
     &:hover {
       background: var(--lightgray);
+    }
+  }
+
+  .canvas-zoom-group {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--lightgray);
+    border-radius: 6px;
+    overflow: hidden;
+
+    button {
+      border: none;
+      border-radius: 0;
+
+      &:first-child {
+        border-bottom: 1px solid var(--lightgray);
+      }
     }
   }
 }
