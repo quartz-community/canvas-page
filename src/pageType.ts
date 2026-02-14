@@ -3,20 +3,20 @@ import type {
   PageMatcher,
   FullSlug,
   VirtualPage,
-  BuildCtx,
 } from "@quartz-community/types";
 import { readFileSync } from "fs";
 import { join } from "path";
 import CanvasBody from "./components/CanvasBody";
 import type { CanvasData, CanvasPageOptions } from "./types";
 
-const canvasMatcher: PageMatcher = ({ slug }) => {
-  return slug.endsWith(".canvas");
+const canvasMatcher: PageMatcher = ({ fileData }) => {
+  return "canvasData" in fileData;
 };
 
 export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
   name: "CanvasPage",
   priority: 20,
+  fileExtensions: [".canvas"],
   match: canvasMatcher,
   generate({ ctx }) {
     const canvasFiles = ctx.allFiles.filter((fp) => fp.endsWith(".canvas"));
@@ -34,12 +34,8 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
         continue;
       }
 
-      const slug = filePath as unknown as FullSlug;
-      const baseName =
-        filePath
-          .replace(/\.canvas$/, "")
-          .split("/")
-          .pop() ?? "Canvas";
+      const slug = filePath.replace(/\.canvas$/, "") as unknown as FullSlug;
+      const baseName = slug.split("/").pop() ?? "Canvas";
 
       virtualPages.push({
         slug,

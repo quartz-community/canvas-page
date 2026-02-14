@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { createCtx } from "./helpers";
 import { CanvasPage } from "../src/pageType";
 import type { CanvasData } from "../src/types";
@@ -25,14 +25,21 @@ describe("CanvasPage", () => {
     expect(plugin.priority).toBe(20);
   });
 
-  it("matches .canvas slugs", () => {
+  it("matches pages with canvasData in fileData", () => {
     const cfg = {} as Parameters<typeof plugin.match>[0]["cfg"];
-    const fileData = {} as Parameters<typeof plugin.match>[0]["fileData"];
+    const withCanvas = { canvasData: sampleCanvas } as Parameters<
+      typeof plugin.match
+    >[0]["fileData"];
+    const withoutCanvas = {} as Parameters<typeof plugin.match>[0]["fileData"];
 
-    expect(plugin.match({ slug: "my-canvas.canvas" as FullSlug, fileData, cfg })).toBe(true);
-    expect(plugin.match({ slug: "notes/project.canvas" as FullSlug, fileData, cfg })).toBe(true);
-    expect(plugin.match({ slug: "regular-page" as FullSlug, fileData, cfg })).toBe(false);
-    expect(plugin.match({ slug: "page.md" as FullSlug, fileData, cfg })).toBe(false);
+    expect(plugin.match({ slug: "my-canvas" as FullSlug, fileData: withCanvas, cfg })).toBe(true);
+    expect(plugin.match({ slug: "regular-page" as FullSlug, fileData: withoutCanvas, cfg })).toBe(
+      false,
+    );
+  });
+
+  it("declares .canvas fileExtensions", () => {
+    expect(plugin.fileExtensions).toEqual([".canvas"]);
   });
 
   it("generates virtual pages from .canvas files", () => {
@@ -46,7 +53,7 @@ describe("CanvasPage", () => {
     const pages = plugin.generate!({ content, cfg, ctx });
 
     expect(pages).toHaveLength(1);
-    expect(pages[0]!.slug).toBe("notes/project.canvas");
+    expect(pages[0]!.slug).toBe("notes/project");
     expect(pages[0]!.title).toBe("project");
     expect(pages[0]!.data).toHaveProperty("canvasData");
   });
