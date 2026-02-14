@@ -1,0 +1,191 @@
+.canvas-page {
+  width: 100%;
+  max-width: none;
+}
+
+.canvas-container {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  overflow: hidden;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background-color: var(--light);
+  background-image: radial-gradient(circle, var(--lightgray) 1px, transparent 1px);
+  background-size: 20px 20px;
+  cursor: grab;
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.canvas-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.canvas-nodes {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.canvas-node {
+  position: absolute;
+  border: 2px solid var(--canvas-node-color, var(--lightgray));
+  border-radius: 6px;
+  background: var(--light);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.canvas-node-content {
+  padding: 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--darkgray);
+  word-wrap: break-word;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.canvas-node-text {
+  .canvas-node-content {
+    white-space: pre-wrap;
+  }
+}
+
+.canvas-node-file {
+  .canvas-file-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--secondary);
+    text-decoration: none;
+    font-weight: 500;
+
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      background: var(--secondary);
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3C/svg%3E");
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .canvas-file-subpath {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-top: 4px;
+  }
+}
+
+.canvas-node-link {
+  .canvas-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--secondary);
+    text-decoration: none;
+
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      background: var(--secondary);
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E");
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.canvas-node-group {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--canvas-node-color, var(--gray));
+  border-radius: 12px;
+
+  .canvas-group-label {
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    padding: 0 8px;
+    background: var(--light);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--canvas-node-color, var(--darkgray));
+  }
+}
+
+.canvas-edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.canvas-edge {
+  path {
+    pointer-events: stroke;
+  }
+}
+
+.canvas-edge-label {
+  font-size: 0.8rem;
+  fill: var(--darkgray);
+  pointer-events: none;
+}
+
+.canvas-controls {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+
+  button {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--lightgray);
+    border-radius: 6px;
+    background: var(--light);
+    color: var(--darkgray);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background 0.1s ease;
+
+    &:hover {
+      background: var(--lightgray);
+    }
+  }
+}

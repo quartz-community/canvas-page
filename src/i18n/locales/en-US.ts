@@ -1,7 +1,8 @@
 export default {
-  components: {
-    example: {
-      title: "Example",
+  pages: {
+    canvas: {
+      title: "Canvas",
+      noData: "No canvas data found.",
     },
   },
 };

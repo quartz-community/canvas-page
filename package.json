@@ -1,23 +1,22 @@
 {
-  "name": "@quartz-community/plugin-template",
+  "name": "@quartz-community/canvas-page",
   "version": "0.1.0",
-  "description": "Template repository for Quartz community plugins.",
+  "description": "JSON Canvas (Obsidian .canvas) page type plugin for Quartz v5. Renders interactive canvas visualizations with nodes and edges.",
   "type": "module",
   "license": "MIT",
   "author": "Quartz Community",
   "homepage": "https://quartz.jzhao.xyz",
   "repository": {
     "type": "git",
-    "url": "https://github.com/quartz-community/plugin-template"
+    "url": "https://github.com/quartz-community/canvas-page"
   },
   "keywords": [
     "quartz",
     "quartz-plugin",
-    "plugin-template",
-    "remark",
-    "rehype",
-    "mdast",
-    "hast"
+    "canvas",
+    "json-canvas",
+    "obsidian",
+    "page-type"
   ],
   "files": [
     "dist",
@@ -54,7 +53,7 @@
     "check": "npm run typecheck && npm run lint && npm run format && npm run test"
   },
   "peerDependencies": {
-    "@jackyzha0/quartz": "^4.5.2",
+    "@jackyzha0/quartz": "^5.0.0",
     "preact": "^10.0.0"
   },
   "peerDependenciesMeta": {
@@ -66,19 +65,10 @@
     }
   },
   "dependencies": {
-    "@quartz-community/types": "github:quartz-community/types",
-    "mdast-util-find-and-replace": "^3.0.1",
-    "rehype-slug": "^6.0.0",
-    "remark-gfm": "^4.0.1",
-    "remark-parse": "^11.0.0",
-    "remark-stringify": "^11.0.0",
-    "unified": "^11.0.5",
-    "unist-util-visit": "^5.0.0",
-    "vfile": "^6.0.3"
+    "@quartz-community/types": "github:quartz-community/types"
   },
   "devDependencies": {
     "@types/hast": "^3.0.4",
-    "@types/mdast": "^4.0.4",
     "@types/node": "^24.10.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
@@ -86,6 +76,7 @@
     "eslint-config-prettier": "^9.1.0",
     "preact": "^10.28.2",
     "prettier": "^3.6.2",
+    "sass-embedded": "^1.97.3",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
     "vitest": "^2.1.9"

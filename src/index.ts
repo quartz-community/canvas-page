@@ -1,25 +1,26 @@
-export { ExampleTransformer } from "./transformer";
-export { ExampleFilter } from "./filter";
-export { ExampleEmitter } from "./emitter";
-export { default as ExampleComponent } from "./components/ExampleComponent";
+export { CanvasPage } from "./pageType";
+export { default as CanvasBody } from "./components/CanvasBody";
+
+export type { CanvasPageOptions } from "./types";
 
 export type {
-  ExampleTransformerOptions,
-  ExampleFilterOptions,
-  ExampleEmitterOptions,
+  CanvasData,
+  CanvasNode,
+  CanvasTextNode,
+  CanvasFileNode,
+  CanvasLinkNode,
+  CanvasGroupNode,
+  CanvasEdge,
+  CanvasColor,
+  CanvasSide,
+  CanvasEnd,
+  CanvasBackgroundStyle,
 } from "./types";
 
-export type { ExampleComponentOptions } from "./components/ExampleComponent";
-
-// Re-export shared types from @quartz-community/types
 export type {
   QuartzComponent,
   QuartzComponentProps,
   QuartzComponentConstructor,
-  StringResource,
-  QuartzTransformerPlugin,
-  QuartzFilterPlugin,
-  QuartzEmitterPlugin,
   QuartzPageTypePlugin,
   QuartzPageTypePluginInstance,
   PageMatcher,
