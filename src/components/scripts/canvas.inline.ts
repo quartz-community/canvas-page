@@ -43,6 +43,21 @@ function initCanvas() {
 
     centerViewport();
 
+    let defaultZoom = zoom;
+    let defaultPanX = panX;
+    let defaultPanY = panY;
+
+    const resetBtn = container.querySelector(".canvas-reset-view");
+
+    function updateResetButton() {
+      if (!resetBtn) return;
+      const changed =
+        Math.abs(zoom - defaultZoom) > 0.001 ||
+        Math.abs(panX - defaultPanX) > 1 ||
+        Math.abs(panY - defaultPanY) > 1;
+      resetBtn.style.display = changed ? "flex" : "none";
+    }
+
     const cleanupFns = [];
 
     if (enableInteraction) {
@@ -76,6 +91,7 @@ function initCanvas() {
         panX = mouseX - (mouseX - panX) * (zoom / prevZoom);
         panY = mouseY - (mouseY - panY) * (zoom / prevZoom);
         applyTransform();
+        updateResetButton();
       }
 
       function onPointerDown(e) {
@@ -100,6 +116,7 @@ function initCanvas() {
         panX = e.clientX - startX;
         panY = e.clientY - startY;
         applyTransform();
+        updateResetButton();
       }
 
       function onPointerUp() {
@@ -111,11 +128,75 @@ function initCanvas() {
       container.addEventListener("pointermove", onPointerMove);
       container.addEventListener("pointerup", onPointerUp);
 
+      let lastTouchDist = 0;
+      let lastTouchMidX = 0;
+      let lastTouchMidY = 0;
+      let isTouchZooming = false;
+
+      function getTouchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function onTouchStart(e) {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          isTouchZooming = true;
+          isPanning = false;
+          lastTouchDist = getTouchDistance(e.touches);
+          lastTouchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          lastTouchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        }
+      }
+
+      function onTouchMove(e) {
+        if (e.touches.length === 2 && isTouchZooming) {
+          e.preventDefault();
+          const dist = getTouchDistance(e.touches);
+          const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+          const rect = container.getBoundingClientRect();
+          const cx = midX - rect.left;
+          const cy = midY - rect.top;
+
+          const scale = dist / lastTouchDist;
+          const prevZoom = zoom;
+          zoom = Math.max(minZoom, Math.min(maxZoom, zoom * scale));
+
+          panX = cx - (cx - panX) * (zoom / prevZoom);
+          panY = cy - (cy - panY) * (zoom / prevZoom);
+
+          panX += midX - lastTouchMidX;
+          panY += midY - lastTouchMidY;
+
+          lastTouchDist = dist;
+          lastTouchMidX = midX;
+          lastTouchMidY = midY;
+          applyTransform();
+          updateResetButton();
+        }
+      }
+
+      function onTouchEnd(e) {
+        if (e.touches.length < 2) {
+          isTouchZooming = false;
+        }
+      }
+
+      container.addEventListener("touchstart", onTouchStart, { passive: false });
+      container.addEventListener("touchmove", onTouchMove, { passive: false });
+      container.addEventListener("touchend", onTouchEnd);
+
       cleanupFns.push(() => {
         container.removeEventListener("wheel", onWheel);
         container.removeEventListener("pointerdown", onPointerDown);
         container.removeEventListener("pointermove", onPointerMove);
         container.removeEventListener("pointerup", onPointerUp);
+        container.removeEventListener("touchstart", onTouchStart);
+        container.removeEventListener("touchmove", onTouchMove);
+        container.removeEventListener("touchend", onTouchEnd);
       });
     }
 
@@ -124,12 +205,20 @@ function initCanvas() {
       function toggleFullscreen() {
         container.classList.toggle("canvas-fullscreen");
         centerViewport();
+        defaultZoom = zoom;
+        defaultPanX = panX;
+        defaultPanY = panY;
+        updateResetButton();
       }
 
       function onEscape(e) {
         if (e.key === "Escape" && container.classList.contains("canvas-fullscreen")) {
           container.classList.remove("canvas-fullscreen");
           centerViewport();
+          defaultZoom = zoom;
+          defaultPanX = panX;
+          defaultPanY = panY;
+          updateResetButton();
         }
       }
 
@@ -140,6 +229,49 @@ function initCanvas() {
         fullscreenToggle.removeEventListener("click", toggleFullscreen);
         document.removeEventListener("keydown", onEscape);
       });
+    }
+
+    const zoomInBtn = container.querySelector(".canvas-zoom-in");
+    const zoomOutBtn = container.querySelector(".canvas-zoom-out");
+
+    function zoomAtCenter(factor) {
+      const rect = container.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const prevZoom = zoom;
+      zoom = Math.max(minZoom, Math.min(maxZoom, zoom * factor));
+      panX = cx - (cx - panX) * (zoom / prevZoom);
+      panY = cy - (cy - panY) * (zoom / prevZoom);
+      applyTransform();
+      updateResetButton();
+    }
+
+    if (zoomInBtn) {
+      function onZoomIn() {
+        zoomAtCenter(1.25);
+      }
+      zoomInBtn.addEventListener("click", onZoomIn);
+      cleanupFns.push(() => zoomInBtn.removeEventListener("click", onZoomIn));
+    }
+
+    if (zoomOutBtn) {
+      function onZoomOut() {
+        zoomAtCenter(0.8);
+      }
+      zoomOutBtn.addEventListener("click", onZoomOut);
+      cleanupFns.push(() => zoomOutBtn.removeEventListener("click", onZoomOut));
+    }
+
+    if (resetBtn) {
+      function onReset() {
+        centerViewport();
+        defaultZoom = zoom;
+        defaultPanX = panX;
+        defaultPanY = panY;
+        updateResetButton();
+      }
+      resetBtn.addEventListener("click", onReset);
+      cleanupFns.push(() => resetBtn.removeEventListener("click", onReset));
     }
 
     // Handle iframe load errors (CSP/X-Frame-Options blocks)

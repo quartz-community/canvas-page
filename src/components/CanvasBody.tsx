@@ -109,7 +109,7 @@ function renderNode(
       }
       return (
         <div class="canvas-node canvas-node-link" data-node-id={node.id} style={styleStr}>
-          <div class="canvas-node-title-bar">
+          <div class="canvas-link-label">
             <a
               href={node.url}
               class="canvas-link external"
@@ -209,9 +209,19 @@ function renderEdge(edge: CanvasEdge, nodeMap: Map<string, CanvasNode>): unknown
         marker-start={hasFromArrow ? `url(#${markerStartId})` : undefined}
       />
       {edge.label && (
-        <text x={midX} y={midY} class="canvas-edge-label" text-anchor="middle" dy="-8">
-          {edge.label}
-        </text>
+        <g class="canvas-edge-label-group">
+          <rect
+            x={midX - edge.label.length * 3.5 - 4}
+            y={midY - 20}
+            width={edge.label.length * 7 + 8}
+            height={16}
+            rx="3"
+            class="canvas-edge-label-bg"
+          />
+          <text x={midX} y={midY} class="canvas-edge-label" text-anchor="middle" dy="-8">
+            {edge.label}
+          </text>
+        </g>
       )}
     </g>
   );
@@ -280,6 +290,62 @@ export default ((userOpts?: CanvasPageOptions) => {
           data-default-fullscreen={defaultFullscreen.toString()}
         >
           <div class="canvas-controls">
+            <button class="canvas-zoom-in" type="button" aria-label="Zoom in">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+            </button>
+            <button class="canvas-zoom-out" type="button" aria-label="Zoom out">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+            </button>
+            <button
+              class="canvas-reset-view"
+              type="button"
+              aria-label="Reset view"
+              style="display:none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+            </button>
             <button class="canvas-fullscreen-toggle" type="button" aria-label="Toggle fullscreen">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
