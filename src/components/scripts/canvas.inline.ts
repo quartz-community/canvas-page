@@ -81,6 +81,14 @@ function initCanvas() {
       function onPointerDown(e) {
         if (e.button !== 0) return;
         if (e.target.closest("a") || e.target.closest("button")) return;
+
+        // Don't start panning when clicking on a scrollbar
+        const scrollable = e.target.closest(".canvas-node-content");
+        if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
+          const rect = scrollable.getBoundingClientRect();
+          if (e.clientX >= rect.right - 16) return;
+        }
+
         isPanning = true;
         startX = e.clientX - panX;
         startY = e.clientY - panY;
@@ -131,6 +139,18 @@ function initCanvas() {
       cleanupFns.push(() => {
         fullscreenToggle.removeEventListener("click", toggleFullscreen);
         document.removeEventListener("keydown", onEscape);
+      });
+    }
+
+    // Handle iframe load errors (CSP/X-Frame-Options blocks)
+    const iframes = container.querySelectorAll(".canvas-iframe-wrapper iframe");
+    for (const iframe of iframes) {
+      iframe.addEventListener("error", () => {
+        const fallback = iframe.parentElement?.querySelector(".canvas-iframe-fallback");
+        if (fallback) {
+          iframe.style.display = "none";
+          fallback.style.display = "flex";
+        }
       });
     }
 

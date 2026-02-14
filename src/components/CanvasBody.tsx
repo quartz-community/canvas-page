@@ -16,24 +16,29 @@ function resolveColor(color?: string): string | undefined {
 }
 
 function getEdgeAnchor(node: CanvasNode, side: string | undefined): { x: number; y: number } {
+  const border = node.type === "group" ? 2 : 2;
   const cx = node.x + node.width / 2;
   const cy = node.y + node.height / 2;
 
   switch (side) {
     case "top":
-      return { x: cx, y: node.y };
+      return { x: cx, y: node.y - border };
     case "bottom":
-      return { x: cx, y: node.y + node.height };
+      return { x: cx, y: node.y + node.height + border };
     case "left":
-      return { x: node.x, y: cy };
+      return { x: node.x - border, y: cy };
     case "right":
-      return { x: node.x + node.width, y: cy };
+      return { x: node.x + node.width + border, y: cy };
     default:
       return { x: cx, y: cy };
   }
 }
 
-function renderNode(node: CanvasNode, renderedTexts: Record<string, string>): unknown {
+function renderNode(
+  node: CanvasNode,
+  renderedTexts: Record<string, string>,
+  embeddedContent: Record<string, string>,
+): unknown {
   const color = resolveColor(node.color);
   const baseStyle: Record<string, string> = {
     left: `${node.x}px`,
@@ -63,37 +68,74 @@ function renderNode(node: CanvasNode, renderedTexts: Record<string, string>): un
       );
     }
 
-    case "file":
+    case "file": {
+      const filename = node.file.split("/").pop()?.replace(/\.md$/, "") ?? node.file;
+      const embedded = embeddedContent[node.id];
       return (
         <div class="canvas-node canvas-node-file" data-node-id={node.id} style={styleStr}>
-          <div class="canvas-node-content">
+          <div class="canvas-node-title-bar">
             <a
               href={`/${node.file.replace(/\.md$/, "")}`}
               class="canvas-file-link internal"
               data-slug={node.file.replace(/\.md$/, "")}
             >
-              {node.file.split("/").pop()?.replace(/\.md$/, "") ?? node.file}
+              {filename}
             </a>
             {node.subpath && <span class="canvas-file-subpath">{node.subpath}</span>}
           </div>
+          <div class="canvas-node-content">
+            {embedded ? (
+              <div class="canvas-embed-content" dangerouslySetInnerHTML={{ __html: embedded }} />
+            ) : (
+              <a
+                href={`/${node.file.replace(/\.md$/, "")}`}
+                class="canvas-file-link internal"
+                data-slug={node.file.replace(/\.md$/, "")}
+              >
+                {filename}
+              </a>
+            )}
+          </div>
         </div>
       );
+    }
 
-    case "link":
+    case "link": {
+      let hostname: string;
+      try {
+        hostname = new URL(node.url).hostname;
+      } catch {
+        hostname = node.url;
+      }
       return (
         <div class="canvas-node canvas-node-link" data-node-id={node.id} style={styleStr}>
-          <div class="canvas-node-content">
+          <div class="canvas-node-title-bar">
             <a
               href={node.url}
               class="canvas-link external"
               target="_blank"
               rel="noopener noreferrer"
             >
-              {new URL(node.url).hostname}
+              {hostname}
             </a>
+          </div>
+          <div class="canvas-node-content canvas-iframe-wrapper">
+            <iframe
+              src={node.url}
+              title={hostname}
+              sandbox="allow-scripts allow-same-origin allow-popups"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+            />
+            <div class="canvas-iframe-fallback">
+              <a href={node.url} target="_blank" rel="noopener noreferrer">
+                Open {hostname} in new tab
+              </a>
+            </div>
           </div>
         </div>
       );
+    }
 
     case "group":
       return (
@@ -193,6 +235,7 @@ export default ((userOpts?: CanvasPageOptions) => {
     const nodes = canvasData.nodes ?? [];
     const edges = canvasData.edges ?? [];
     const renderedTexts = canvasData.renderedTexts ?? {};
+    const embeddedContent = (fileData.embeddedContent as Record<string, string>) ?? {};
 
     const nodeMap = new Map<string, CanvasNode>();
     for (const node of nodes) {
@@ -279,7 +322,7 @@ export default ((userOpts?: CanvasPageOptions) => {
               class="canvas-nodes"
               style={`transform:translate(${-minX + padding}px,${-minY + padding}px)`}
             >
-              {nodes.map((node) => renderNode(node, renderedTexts))}
+              {nodes.map((node) => renderNode(node, renderedTexts, embeddedContent))}
             </div>
             <svg
               class="canvas-edges"

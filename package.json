@@ -66,6 +66,7 @@
   },
   "dependencies": {
     "@quartz-community/types": "github:quartz-community/types",
+    "hast-util-to-html": "^9.0.5",
     "micromark": "^4.0.2",
     "micromark-extension-gfm": "^3.0.0"
   },
