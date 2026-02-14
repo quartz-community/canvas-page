@@ -119,6 +119,8 @@ export interface CanvasPageOptions {
   minZoom?: number;
   /** Maximum zoom level. Default: 5 */
   maxZoom?: number;
+  /** Whether canvas pages default to fullscreen mode. Default: false */
+  defaultFullscreen?: boolean;
 }
 
 /** Preset color map: preset number → CSS color value */

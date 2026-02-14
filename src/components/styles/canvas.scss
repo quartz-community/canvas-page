@@ -19,6 +19,35 @@
   &:active {
     cursor: grabbing;
   }
+
+  &.canvas-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999;
+    border-radius: 0;
+    border: none;
+
+    .canvas-fullscreen-icon-expand {
+      display: none;
+    }
+
+    .canvas-fullscreen-icon-collapse {
+      display: block;
+    }
+  }
+
+  &:not(.canvas-fullscreen) {
+    .canvas-fullscreen-icon-expand {
+      display: block;
+    }
+
+    .canvas-fullscreen-icon-collapse {
+      display: none;
+    }
+  }
 }
 
 .canvas-viewport {

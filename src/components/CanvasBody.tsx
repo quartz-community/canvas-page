@@ -61,7 +61,11 @@ function renderNode(node: CanvasNode): unknown {
       return (
         <div class="canvas-node canvas-node-file" data-node-id={node.id} style={styleStr}>
           <div class="canvas-node-content">
-            <a href={`/${node.file.replace(/\.md$/, "")}`} class="canvas-file-link">
+            <a
+              href={`/${node.file.replace(/\.md$/, "")}`}
+              class="canvas-file-link internal"
+              data-slug={node.file.replace(/\.md$/, "")}
+            >
               {node.file.split("/").pop()?.replace(/\.md$/, "") ?? node.file}
             </a>
             {node.subpath && <span class="canvas-file-subpath">{node.subpath}</span>}
@@ -172,7 +176,7 @@ export default ((userOpts?: CanvasPageOptions) => {
 
     if (!canvasData) {
       return (
-        <article class="canvas-page">
+        <article class="canvas-page popover-hint">
           <p>No canvas data found.</p>
         </article>
       );
@@ -211,16 +215,56 @@ export default ((userOpts?: CanvasPageOptions) => {
     const initialZoom = opts.initialZoom ?? 1;
     const minZoom = opts.minZoom ?? 0.1;
     const maxZoom = opts.maxZoom ?? 5;
+    const defaultFullscreen = opts.defaultFullscreen ?? false;
 
     return (
-      <article class="canvas-page">
+      <article class="canvas-page popover-hint">
         <div
-          class="canvas-container"
+          class={`canvas-container${defaultFullscreen ? " canvas-fullscreen" : ""}`}
           data-enable-interaction={enableInteraction.toString()}
           data-initial-zoom={initialZoom.toString()}
           data-min-zoom={minZoom.toString()}
           data-max-zoom={maxZoom.toString()}
+          data-default-fullscreen={defaultFullscreen.toString()}
         >
+          <div class="canvas-controls">
+            <button class="canvas-fullscreen-toggle" type="button" aria-label="Toggle fullscreen">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="canvas-fullscreen-icon-expand"
+              >
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="9 21 3 21 3 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="canvas-fullscreen-icon-collapse"
+              >
+                <polyline points="4 14 10 14 10 20" />
+                <polyline points="20 10 14 10 14 4" />
+                <line x1="14" y1="10" x2="21" y2="3" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
+            </button>
+          </div>
           <div class="canvas-viewport" style={`width:${viewWidth}px;height:${viewHeight}px`}>
             <div
               class="canvas-nodes"
