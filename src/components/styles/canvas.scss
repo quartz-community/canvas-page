@@ -207,6 +207,11 @@
 .canvas-node-link {
   overflow: visible;
 
+  .canvas-node-content {
+    padding: 0;
+    overflow: hidden;
+  }
+
   .canvas-link-label {
     position: absolute;
     bottom: 100%;
@@ -247,6 +252,7 @@
   .canvas-iframe-wrapper {
     position: relative;
     padding: 0;
+    overflow: hidden;
 
     iframe {
       width: 100%;
