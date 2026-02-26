@@ -23,12 +23,9 @@ const inlineScriptPlugin: Plugin = {
 
     // SCSS files are loaded as raw text (CSS injected via style tags)
     parentBuild.onLoad({ filter: /\.scss$/ }, async (args) => {
-      const fs = await import("fs");
-      const text = await fs.promises.readFile(args.path, "utf8");
-      return {
-        contents: text,
-        loader: "text",
-      };
+      const sass = await import("sass");
+      const result = sass.compile(args.path);
+      return { contents: result.css, loader: "text" };
     });
 
     // Inline TypeScript files are transpiled + bundled for the browser
