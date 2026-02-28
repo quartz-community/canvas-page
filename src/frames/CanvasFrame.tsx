@@ -5,6 +5,8 @@ export const CanvasFrame: PageFrame = {
   name: "canvas",
   css: `
 .page[data-frame="canvas"] {
+  max-width: none;
+  margin: 0;
   min-height: 100vh;
 }
 
@@ -14,6 +16,7 @@ export const CanvasFrame: PageFrame = {
   grid-template-areas:
     "grid-center";
   height: 100vh;
+  padding: 0;
 }
 
 .page[data-frame="canvas"] > #quartz-body > .center.canvas-frame {
@@ -21,6 +24,10 @@ export const CanvasFrame: PageFrame = {
   min-width: 100%;
   height: 100%;
   margin: 0;
+}
+
+.page[data-frame="canvas"] > #quartz-body.lock-scroll > * {
+  transform: none;
 }
 `,
   render({ componentData, pageBody: Content, left }: PageFrameProps): unknown {
