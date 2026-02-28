@@ -200,10 +200,11 @@ function initCanvas() {
       });
     }
 
-    const fullscreenToggle = container.querySelector(".canvas-fullscreen-toggle");
-    if (fullscreenToggle) {
-      function toggleFullscreen() {
-        container.classList.toggle("canvas-fullscreen");
+    const frame = container.closest('.page[data-frame="canvas"]');
+    const sidebarToggle = frame?.querySelector(".canvas-sidebar-toggle");
+    if (frame && sidebarToggle) {
+      function toggleSidebar() {
+        frame.classList.toggle("canvas-sidebar-open");
         centerViewport();
         defaultZoom = zoom;
         defaultPanX = panX;
@@ -211,23 +212,10 @@ function initCanvas() {
         updateResetButton();
       }
 
-      function onEscape(e) {
-        if (e.key === "Escape" && container.classList.contains("canvas-fullscreen")) {
-          container.classList.remove("canvas-fullscreen");
-          centerViewport();
-          defaultZoom = zoom;
-          defaultPanX = panX;
-          defaultPanY = panY;
-          updateResetButton();
-        }
-      }
-
-      fullscreenToggle.addEventListener("click", toggleFullscreen);
-      document.addEventListener("keydown", onEscape);
+      sidebarToggle.addEventListener("click", toggleSidebar);
 
       cleanupFns.push(() => {
-        fullscreenToggle.removeEventListener("click", toggleFullscreen);
-        document.removeEventListener("keydown", onEscape);
+        sidebarToggle.removeEventListener("click", toggleSidebar);
       });
     }
 

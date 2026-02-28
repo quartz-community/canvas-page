@@ -76,6 +76,7 @@ export default defineConfig({
     index: "src/index.ts",
     types: "src/types.ts",
     "components/index": "src/components/index.ts",
+    "frames/index": "src/frames/index.ts",
   },
   format: ["esm"],
   dts: true,

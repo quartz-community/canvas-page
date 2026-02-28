@@ -1,5 +1,6 @@
 export { CanvasPage } from "./pageType";
 export { default as CanvasBody } from "./components/CanvasBody";
+export { CanvasFrame } from "./frames/CanvasFrame";
 
 export type { CanvasPageOptions } from "./types";
 

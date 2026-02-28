@@ -109,6 +109,6 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
     return virtualPages;
   },
   layout: "canvas",
-  frame: "full-width",
+  frame: "canvas",
   body: CanvasBody,
 });

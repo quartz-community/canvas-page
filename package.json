@@ -37,6 +37,10 @@
       "types": "./dist/components/index.d.ts",
       "import": "./dist/components/index.js"
     },
+    "./frames": {
+      "types": "./dist/frames/index.d.ts",
+      "import": "./dist/frames/index.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",
@@ -97,7 +101,12 @@
     "dependencies": [],
     "defaultOrder": 50,
     "defaultEnabled": true,
-    "defaultOptions": {}
+    "defaultOptions": {},
+    "frames": {
+      "CanvasFrame": {
+        "exportName": "CanvasFrame"
+      }
+    }
   },
   "engines": {
     "node": ">=22",
