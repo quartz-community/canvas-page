@@ -364,6 +364,7 @@
   top: 0;
   height: 100vh;
   width: var(--canvas-sidebar-width);
+  box-sizing: border-box;
   background: var(--light);
   border-right: 1px solid var(--lightgray);
   box-shadow: 8px 0 24px rgba(0, 0, 0, 0.12);
