@@ -296,13 +296,13 @@
 }
 
 .canvas-controls {
-  position: absolute;
+  position: fixed;
   top: 12px;
   right: 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  z-index: 10;
+  z-index: 25;
 
   button {
     width: 32px;
