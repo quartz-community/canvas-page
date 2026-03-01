@@ -498,6 +498,11 @@
     height: auto;
     min-height: 400px;
   }
+
+  // Contain controls within the embedded canvas rather than viewport
+  .canvas-controls {
+    position: absolute;
+  }
 }
 
 // Popover previews of canvas pages
@@ -510,5 +515,27 @@
     height: auto;
     min-height: 200px;
     max-height: 300px;
+  }
+
+  .canvas-controls {
+    display: none;
+  }
+}
+
+// Fullscreen toggle — hidden on dedicated canvas pages (frame handles layout),
+// visible only in embedded/transclude contexts.
+.page[data-frame="canvas"] .canvas-fullscreen-toggle {
+  display: none;
+}
+
+// Fullscreen mode for embedded canvases
+.canvas-container:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  min-height: unset;
+  background-color: var(--light);
+
+  .canvas-controls {
+    position: fixed;
   }
 }

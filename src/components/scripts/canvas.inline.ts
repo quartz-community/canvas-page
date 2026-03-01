@@ -262,6 +262,46 @@ function initCanvas() {
       cleanupFns.push(() => resetBtn.removeEventListener("click", onReset));
     }
 
+    // Fullscreen toggle for embedded canvases
+    const fullscreenBtn = container.querySelector(".canvas-fullscreen-toggle");
+    if (fullscreenBtn) {
+      const enterIcon = fullscreenBtn.querySelector(".canvas-fullscreen-enter");
+      const exitIcon = fullscreenBtn.querySelector(".canvas-fullscreen-exit");
+
+      function updateFullscreenIcons() {
+        const isFs = document.fullscreenElement === container;
+        if (enterIcon) enterIcon.style.display = isFs ? "none" : "";
+        if (exitIcon) exitIcon.style.display = isFs ? "" : "none";
+      }
+
+      function onFullscreenToggle() {
+        if (document.fullscreenElement === container) {
+          document.exitFullscreen();
+        } else {
+          container.requestFullscreen();
+        }
+      }
+
+      function onFullscreenChange() {
+        updateFullscreenIcons();
+        // Re-center after entering/exiting fullscreen
+        requestAnimationFrame(() => {
+          centerViewport();
+          defaultZoom = zoom;
+          defaultPanX = panX;
+          defaultPanY = panY;
+          updateResetButton();
+        });
+      }
+
+      fullscreenBtn.addEventListener("click", onFullscreenToggle);
+      document.addEventListener("fullscreenchange", onFullscreenChange);
+      cleanupFns.push(() => {
+        fullscreenBtn.removeEventListener("click", onFullscreenToggle);
+        document.removeEventListener("fullscreenchange", onFullscreenChange);
+      });
+    }
+
     // Handle iframe load errors (CSP/X-Frame-Options blocks)
     const iframes = container.querySelectorAll(".canvas-iframe-wrapper iframe");
     for (const iframe of iframes) {
