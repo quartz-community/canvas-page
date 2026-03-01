@@ -426,18 +426,30 @@
   }
 }
 
-// Explorer overrides inside canvas sidebar
-// Force desktop-style explorer at all viewport sizes
+// Canvas sidebar overrides
+// The sidebar itself is togglable, so components inside it should not
+// have their own collapse/toggle behavior.
+
 .page[data-frame="canvas"] .canvas-sidebar {
-  // Always show desktop explorer button, hide mobile
-  .explorer button.desktop-explorer {
-    display: flex;
-  }
-  .explorer button.mobile-explorer {
+  // Add padding for sidebar content
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  // Hide spacer — not needed in canvas sidebar
+  .spacer {
     display: none;
   }
 
-  // Neutralize mobile fullscreen takeover
+  // Hide both Explorer toggle buttons — the sidebar toggle replaces them
+  .explorer button.desktop-explorer,
+  .explorer button.mobile-explorer {
+    display: none !important;
+  }
+
+  // Force Explorer always expanded (never collapsed)
+  // The sidebar itself handles show/hide, so the Explorer should always be open.
   .explorer {
     order: initial;
     height: auto;
@@ -448,37 +460,25 @@
     margin-bottom: 0;
   }
 
-  .explorer .explorer-content {
+  // Override collapsed state — always show content
+  .explorer .explorer-content,
+  .explorer.collapsed > .explorer-content,
+  .explorer:not(.collapsed) > .explorer-content {
     position: static;
     width: auto;
     max-width: none;
     height: auto;
     max-height: none;
-    transform: none;
-    visibility: visible;
+    transform: none !important;
+    visibility: visible !important;
     padding: 0;
     overflow-y: auto;
     z-index: auto;
     background-color: transparent;
   }
 
-  // Neutralize mobile collapsed transform
-  .explorer.collapsed > .explorer-content {
-    transform: none;
-  }
-  .explorer:not(.collapsed) > .explorer-content {
-    transform: none;
-    visibility: visible;
-  }
-
   // Prevent lock-scroll side effects in canvas context
   .explorer-content > .explorer-ul {
     overscroll-behavior: auto;
   }
-
-  // Add padding for sidebar content
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
