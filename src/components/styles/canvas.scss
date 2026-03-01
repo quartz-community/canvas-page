@@ -362,15 +362,14 @@
 .page[data-frame="canvas"] .canvas-sidebar {
   position: fixed;
   top: 0;
-  left: 0;
   height: 100vh;
   width: var(--canvas-sidebar-width);
   background: var(--light);
   border-right: 1px solid var(--lightgray);
   box-shadow: 8px 0 24px rgba(0, 0, 0, 0.12);
   overflow-y: auto;
-  transform: translateX(-100%);
-  transition: transform 0.25s ease;
+  left: calc(-1 * var(--canvas-sidebar-width));
+  transition: left 0.25s ease;
   z-index: 20;
 }
 
@@ -405,7 +404,7 @@
 }
 
 .page[data-frame="canvas"].canvas-sidebar-open .canvas-sidebar {
-  transform: translateX(0);
+  left: 0;
 }
 
 .page[data-frame="canvas"].canvas-sidebar-open .canvas-sidebar-icon-open {
