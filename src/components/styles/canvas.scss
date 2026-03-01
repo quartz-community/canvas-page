@@ -453,6 +453,8 @@
     order: initial;
     height: auto;
     overflow-y: hidden;
+    overflow: visible;
+    flex: 0 1 auto;
     flex-shrink: initial;
     align-self: initial;
     margin-top: 0;
@@ -479,5 +481,34 @@
   // Prevent lock-scroll side effects in canvas context
   .explorer-content > .explorer-ul {
     overscroll-behavior: auto;
+  }
+}
+
+// Canvas embeds inside transcludes
+// The .canvas-page and .canvas-container use height:100% which collapses
+// to 0 when there is no explicit height ancestor (e.g. inside a blockquote).
+// Provide an explicit min-height so the JS centerViewport() can calculate
+// proper zoom/pan values, and the canvas content is visible.
+.transclude {
+  .canvas-page {
+    height: auto;
+  }
+
+  .canvas-container {
+    height: auto;
+    min-height: 400px;
+  }
+}
+
+// Popover previews of canvas pages
+.popover-inner {
+  .canvas-page {
+    height: auto;
+  }
+
+  .canvas-container {
+    height: auto;
+    min-height: 200px;
+    max-height: 300px;
   }
 }
