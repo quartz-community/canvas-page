@@ -1,32 +1,30 @@
-// @ts-nocheck
-
 function initCanvas() {
-  const containers = document.querySelectorAll(".canvas-container");
+  const containers = document.querySelectorAll(".canvas-container") as NodeListOf<HTMLElement>;
   if (containers.length === 0) return;
 
-  for (const container of containers) {
+  for (const container of Array.from(containers)) {
     if (container.dataset.initialized === "true") continue;
     container.dataset.initialized = "true";
 
-    const viewport = container.querySelector(".canvas-viewport");
+    const viewport = container.querySelector(".canvas-viewport") as HTMLElement | null;
     if (!viewport) continue;
 
     const enableInteraction = container.dataset.enableInteraction !== "false";
 
-    const minZoom = parseFloat(container.dataset.minZoom) || 0.1;
-    const maxZoom = parseFloat(container.dataset.maxZoom) || 5;
-    let zoom = parseFloat(container.dataset.initialZoom) || 1;
+    const minZoom = parseFloat(container.dataset.minZoom ?? "") || 0.1;
+    const maxZoom = parseFloat(container.dataset.maxZoom ?? "") || 5;
+    let zoom = parseFloat(container.dataset.initialZoom ?? "") || 1;
     let panX = 0;
     let panY = 0;
     let isPanning = false;
     let startX = 0;
     let startY = 0;
 
-    function applyTransform() {
+    const applyTransform = () => {
       viewport.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
-    }
+    };
 
-    function centerViewport() {
+    const centerViewport = () => {
       const containerRect = container.getBoundingClientRect();
       const vw = parseFloat(viewport.style.width) || 1000;
       const vh = parseFloat(viewport.style.height) || 1000;
@@ -39,7 +37,7 @@ function initCanvas() {
       panX = (containerRect.width - vw * zoom) / 2;
       panY = (containerRect.height - vh * zoom) / 2;
       applyTransform();
-    }
+    };
 
     centerViewport();
 
@@ -47,23 +45,24 @@ function initCanvas() {
     let defaultPanX = panX;
     let defaultPanY = panY;
 
-    const resetBtn = container.querySelector(".canvas-reset-view");
+    const resetBtn = container.querySelector(".canvas-reset-view") as HTMLButtonElement | null;
 
-    function updateResetButton() {
+    const updateResetButton = () => {
       if (!resetBtn) return;
       const changed =
         Math.abs(zoom - defaultZoom) > 0.001 ||
         Math.abs(panX - defaultPanX) > 1 ||
         Math.abs(panY - defaultPanY) > 1;
       resetBtn.style.display = changed ? "flex" : "none";
-    }
+    };
 
-    const cleanupFns = [];
+    const cleanupFns: Array<() => void> = [];
 
     if (enableInteraction) {
-      function onWheel(e) {
+      const onWheel = (e: WheelEvent) => {
         // If the wheel target is inside a scrollable text node, let it scroll naturally
-        const scrollable = e.target.closest(".canvas-node-content");
+        const scrollable =
+          e.target instanceof HTMLElement ? e.target.closest(".canvas-node-content") : null;
         if (scrollable) {
           const canScroll = scrollable.scrollHeight > scrollable.clientHeight;
           if (canScroll) {
@@ -92,36 +91,40 @@ function initCanvas() {
         panY = mouseY - (mouseY - panY) * (zoom / prevZoom);
         applyTransform();
         updateResetButton();
-      }
+      };
 
-      function onPointerDown(e) {
+      const onPointerDown = (e: PointerEvent) => {
         if (e.button !== 0) return;
-        if (e.target.closest("a") || e.target.closest("button")) return;
+        if (e.target instanceof HTMLElement) {
+          if (e.target.closest("a") || e.target.closest("button")) return;
+        }
 
         // Don't start panning when clicking on a scrollbar
-        const scrollable = e.target.closest(".canvas-node-content");
-        if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
-          const rect = scrollable.getBoundingClientRect();
-          if (e.clientX >= rect.right - 16) return;
+        if (e.target instanceof HTMLElement) {
+          const scrollable = e.target.closest(".canvas-node-content");
+          if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
+            const rect = scrollable.getBoundingClientRect();
+            if (e.clientX >= rect.right - 16) return;
+          }
         }
 
         isPanning = true;
         startX = e.clientX - panX;
         startY = e.clientY - panY;
         container.setPointerCapture(e.pointerId);
-      }
+      };
 
-      function onPointerMove(e) {
+      const onPointerMove = (e: PointerEvent) => {
         if (!isPanning) return;
         panX = e.clientX - startX;
         panY = e.clientY - startY;
         applyTransform();
         updateResetButton();
-      }
+      };
 
-      function onPointerUp() {
+      const onPointerUp = () => {
         isPanning = false;
-      }
+      };
 
       container.addEventListener("wheel", onWheel, { passive: false });
       container.addEventListener("pointerdown", onPointerDown);
@@ -133,29 +136,36 @@ function initCanvas() {
       let lastTouchMidY = 0;
       let isTouchZooming = false;
 
-      function getTouchDistance(touches) {
+      const getTouchDistance = (touches: TouchList) => {
+        if (touches.length < 2 || !touches[0] || !touches[1]) return 0;
         const dx = touches[0].clientX - touches[1].clientX;
         const dy = touches[0].clientY - touches[1].clientY;
         return Math.sqrt(dx * dx + dy * dy);
-      }
+      };
 
-      function onTouchStart(e) {
+      const onTouchStart = (e: TouchEvent) => {
         if (e.touches.length === 2) {
+          const first = e.touches[0];
+          const second = e.touches[1];
+          if (!first || !second) return;
           e.preventDefault();
           isTouchZooming = true;
           isPanning = false;
           lastTouchDist = getTouchDistance(e.touches);
-          lastTouchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-          lastTouchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          lastTouchMidX = (first.clientX + second.clientX) / 2;
+          lastTouchMidY = (first.clientY + second.clientY) / 2;
         }
-      }
+      };
 
-      function onTouchMove(e) {
+      const onTouchMove = (e: TouchEvent) => {
         if (e.touches.length === 2 && isTouchZooming) {
+          const first = e.touches[0];
+          const second = e.touches[1];
+          if (!first || !second) return;
           e.preventDefault();
           const dist = getTouchDistance(e.touches);
-          const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-          const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          const midX = (first.clientX + second.clientX) / 2;
+          const midY = (first.clientY + second.clientY) / 2;
 
           const rect = container.getBoundingClientRect();
           const cx = midX - rect.left;
@@ -177,13 +187,13 @@ function initCanvas() {
           applyTransform();
           updateResetButton();
         }
-      }
+      };
 
-      function onTouchEnd(e) {
+      const onTouchEnd = (e: TouchEvent) => {
         if (e.touches.length < 2) {
           isTouchZooming = false;
         }
-      }
+      };
 
       container.addEventListener("touchstart", onTouchStart, { passive: false });
       container.addEventListener("touchmove", onTouchMove, { passive: false });
@@ -200,17 +210,19 @@ function initCanvas() {
       });
     }
 
-    const frame = container.closest('.page[data-frame="canvas"]');
-    const sidebarToggle = frame?.querySelector(".canvas-sidebar-toggle");
+    const frame = container.closest('.page[data-frame="canvas"]') as HTMLElement | null;
+    const sidebarToggle = frame?.querySelector(
+      ".canvas-sidebar-toggle",
+    ) as HTMLButtonElement | null;
     if (frame && sidebarToggle) {
-      function toggleSidebar() {
+      const toggleSidebar = () => {
         frame.classList.toggle("canvas-sidebar-open");
         centerViewport();
         defaultZoom = zoom;
         defaultPanX = panX;
         defaultPanY = panY;
         updateResetButton();
-      }
+      };
 
       sidebarToggle.addEventListener("click", toggleSidebar);
 
@@ -219,10 +231,10 @@ function initCanvas() {
       });
     }
 
-    const zoomInBtn = container.querySelector(".canvas-zoom-in");
-    const zoomOutBtn = container.querySelector(".canvas-zoom-out");
+    const zoomInBtn = container.querySelector(".canvas-zoom-in") as HTMLButtonElement | null;
+    const zoomOutBtn = container.querySelector(".canvas-zoom-out") as HTMLButtonElement | null;
 
-    function zoomAtCenter(factor) {
+    const zoomAtCenter = (factor: number) => {
       const rect = container.getBoundingClientRect();
       const cx = rect.width / 2;
       const cy = rect.height / 2;
@@ -232,57 +244,61 @@ function initCanvas() {
       panY = cy - (cy - panY) * (zoom / prevZoom);
       applyTransform();
       updateResetButton();
-    }
+    };
 
     if (zoomInBtn) {
-      function onZoomIn() {
+      const onZoomIn = () => {
         zoomAtCenter(1.25);
-      }
+      };
       zoomInBtn.addEventListener("click", onZoomIn);
       cleanupFns.push(() => zoomInBtn.removeEventListener("click", onZoomIn));
     }
 
     if (zoomOutBtn) {
-      function onZoomOut() {
+      const onZoomOut = () => {
         zoomAtCenter(0.8);
-      }
+      };
       zoomOutBtn.addEventListener("click", onZoomOut);
       cleanupFns.push(() => zoomOutBtn.removeEventListener("click", onZoomOut));
     }
 
     if (resetBtn) {
-      function onReset() {
+      const onReset = () => {
         centerViewport();
         defaultZoom = zoom;
         defaultPanX = panX;
         defaultPanY = panY;
         updateResetButton();
-      }
+      };
       resetBtn.addEventListener("click", onReset);
       cleanupFns.push(() => resetBtn.removeEventListener("click", onReset));
     }
 
     // Fullscreen toggle for embedded canvases
-    const fullscreenBtn = container.querySelector(".canvas-fullscreen-toggle");
+    const fullscreenBtn = container.querySelector(
+      ".canvas-fullscreen-toggle",
+    ) as HTMLButtonElement | null;
     if (fullscreenBtn) {
-      const enterIcon = fullscreenBtn.querySelector(".canvas-fullscreen-enter");
-      const exitIcon = fullscreenBtn.querySelector(".canvas-fullscreen-exit");
+      const enterIcon = fullscreenBtn.querySelector(
+        ".canvas-fullscreen-enter",
+      ) as HTMLElement | null;
+      const exitIcon = fullscreenBtn.querySelector(".canvas-fullscreen-exit") as HTMLElement | null;
 
-      function updateFullscreenIcons() {
+      const updateFullscreenIcons = () => {
         const isFs = document.fullscreenElement === container;
         if (enterIcon) enterIcon.style.display = isFs ? "none" : "";
         if (exitIcon) exitIcon.style.display = isFs ? "" : "none";
-      }
+      };
 
-      function onFullscreenToggle() {
+      const onFullscreenToggle = () => {
         if (document.fullscreenElement === container) {
           document.exitFullscreen();
         } else {
           container.requestFullscreen();
         }
-      }
+      };
 
-      function onFullscreenChange() {
+      const onFullscreenChange = () => {
         updateFullscreenIcons();
         // Re-center after entering/exiting fullscreen
         requestAnimationFrame(() => {
@@ -292,7 +308,7 @@ function initCanvas() {
           defaultPanY = panY;
           updateResetButton();
         });
-      }
+      };
 
       fullscreenBtn.addEventListener("click", onFullscreenToggle);
       document.addEventListener("fullscreenchange", onFullscreenChange);
@@ -303,10 +319,14 @@ function initCanvas() {
     }
 
     // Handle iframe load errors (CSP/X-Frame-Options blocks)
-    const iframes = container.querySelectorAll(".canvas-iframe-wrapper iframe");
-    for (const iframe of iframes) {
+    const iframes = container.querySelectorAll(
+      ".canvas-iframe-wrapper iframe",
+    ) as NodeListOf<HTMLIFrameElement>;
+    for (const iframe of Array.from(iframes)) {
       iframe.addEventListener("error", () => {
-        const fallback = iframe.parentElement?.querySelector(".canvas-iframe-fallback");
+        const fallback = iframe.parentElement?.querySelector(
+          ".canvas-iframe-fallback",
+        ) as HTMLElement | null;
         if (fallback) {
           iframe.style.display = "none";
           fallback.style.display = "flex";

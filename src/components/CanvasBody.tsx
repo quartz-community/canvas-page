@@ -6,7 +6,7 @@ import type {
 import type { CanvasData, CanvasNode, CanvasEdge, CanvasPageOptions } from "../types";
 import { CANVAS_PRESET_COLORS } from "../types";
 import style from "./styles/canvas.scss";
-// @ts-ignore
+// @ts-expect-error inline script import handled by bundler
 import script from "./scripts/canvas.inline.ts";
 
 function resolveColor(color?: string): string | undefined {
