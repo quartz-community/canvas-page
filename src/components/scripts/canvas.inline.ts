@@ -344,7 +344,9 @@ function initCanvas() {
 }
 
 if (typeof document !== "undefined") {
-  document.addEventListener("nav", () => {
+  const handleCanvasInit = () => {
     initCanvas();
-  });
+  };
+  document.addEventListener("nav", handleCanvasInit);
+  document.addEventListener("render", handleCanvasInit);
 }
