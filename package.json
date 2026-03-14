@@ -58,7 +58,8 @@
   },
   "peerDependencies": {
     "@jackyzha0/quartz": "^5.0.0",
-    "preact": "^10.0.0"
+    "preact": "^10.0.0",
+    "hast-util-to-html": "^9.0.5"
   },
   "peerDependenciesMeta": {
     "@jackyzha0/quartz": {
@@ -66,15 +67,15 @@
     },
     "preact": {
       "optional": false
+    },
+    "hast-util-to-html": {
+      "optional": true
     }
   },
   "dependencies": {
     "@quartz-community/types": "github:quartz-community/types",
-    "hast-util-to-html": "^9.0.5",
     "micromark": "^4.0.2",
-    "micromark-extension-gfm": "^3.0.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3"
+    "micromark-extension-gfm": "^3.0.0"
   },
   "devDependencies": {
     "@types/hast": "^3.0.4",
@@ -87,7 +88,9 @@
     "prettier": "^3.6.2",
     "sass": "^1.97.3",
     "sass-embedded": "^1.97.3",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
   },
   "quartz": {
     "name": "canvas-page",
