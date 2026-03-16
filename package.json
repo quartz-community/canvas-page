@@ -57,8 +57,8 @@
   },
   "peerDependencies": {
     "@jackyzha0/quartz": "^5.0.0",
-    "preact": "^10.0.0",
-    "hast-util-to-html": "^9.0.5"
+    "hast-util-to-html": "^9.0.5",
+    "preact": "^10.0.0"
   },
   "peerDependenciesMeta": {
     "@jackyzha0/quartz": {
