@@ -90,6 +90,7 @@
     "sass-embedded": "^1.97.3",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
+    "vfile": "^6.0.3",
     "vitest": "^2.1.9"
   },
   "quartz": {
