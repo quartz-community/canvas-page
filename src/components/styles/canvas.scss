@@ -303,6 +303,7 @@
   flex-direction: column;
   gap: 4px;
   z-index: 25;
+  transition: top 0.25s ease;
 
   button {
     width: 32px;
@@ -441,6 +442,10 @@
 
   .page[data-frame="canvas"].canvas-sidebar-open .canvas-sidebar-toggle {
     left: min(calc(var(--canvas-sidebar-width) + 12px), calc(100vw - 44px));
+  }
+
+  .page[data-frame="canvas"].canvas-sidebar-open .canvas-controls {
+    top: 48px;
   }
 }
 
