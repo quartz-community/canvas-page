@@ -2,7 +2,9 @@ import type {
   QuartzComponent,
   QuartzComponentProps,
   QuartzComponentConstructor,
+  FullSlug,
 } from "@quartz-community/types";
+import { resolveRelative } from "@quartz-community/utils/path";
 import type { CanvasData, CanvasNode, CanvasEdge, CanvasPageOptions } from "../types";
 import { CANVAS_PRESET_COLORS } from "../types";
 import style from "./styles/canvas.scss";
@@ -38,6 +40,7 @@ function renderNode(
   node: CanvasNode,
   renderedTexts: Record<string, string>,
   embeddedContent: Record<string, string>,
+  slug: FullSlug,
 ): unknown {
   const color = resolveColor(node.color);
   const baseStyle: Record<string, string> = {
@@ -75,7 +78,7 @@ function renderNode(
         <div class="canvas-node canvas-node-file" data-node-id={node.id} style={styleStr}>
           <div class="canvas-file-label">
             <a
-              href={`/${node.file.replace(/\.md$/, "")}`}
+              href={resolveRelative(slug, node.file.replace(/\.md$/, "") as FullSlug)}
               class="canvas-file-link internal"
               data-slug={node.file.replace(/\.md$/, "")}
             >
@@ -88,7 +91,7 @@ function renderNode(
               <div class="canvas-embed-content" dangerouslySetInnerHTML={{ __html: embedded }} />
             ) : (
               <a
-                href={`/${node.file.replace(/\.md$/, "")}`}
+                href={resolveRelative(slug, node.file.replace(/\.md$/, "") as FullSlug)}
                 class="canvas-file-link internal"
                 data-slug={node.file.replace(/\.md$/, "")}
               >
@@ -230,6 +233,7 @@ function renderEdge(edge: CanvasEdge, nodeMap: Map<string, CanvasNode>): unknown
 export default ((userOpts?: CanvasPageOptions) => {
   const Component: QuartzComponent = (props: QuartzComponentProps) => {
     const fileData = props.fileData as Record<string, unknown>;
+    const slug = props.slug as FullSlug;
     const canvasData = fileData.canvasData as
       | (CanvasData & { renderedTexts?: Record<string, string> })
       | undefined;
@@ -388,7 +392,7 @@ export default ((userOpts?: CanvasPageOptions) => {
               class="canvas-nodes"
               style={`transform:translate(${-minX + padding}px,${-minY + padding}px)`}
             >
-              {nodes.map((node) => renderNode(node, renderedTexts, embeddedContent))}
+              {nodes.map((node) => renderNode(node, renderedTexts, embeddedContent, slug))}
             </div>
             <svg
               class="canvas-edges"

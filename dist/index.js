@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { resolveRelative } from '@quartz-community/utils/path';
 import { jsxs, jsx } from 'preact/jsx-runtime';
 
 var __defProp = Object.defineProperty;
@@ -11117,7 +11118,7 @@ function getEdgeAnchor(node, side) {
       return { x: cx, y: cy };
   }
 }
-function renderNode(node, renderedTexts, embeddedContent) {
+function renderNode(node, renderedTexts, embeddedContent, slug) {
   const color = resolveColor(node.color);
   const baseStyle = {
     left: `${node.x}px`,
@@ -11142,7 +11143,7 @@ function renderNode(node, renderedTexts, embeddedContent) {
           /* @__PURE__ */ jsx(
             "a",
             {
-              href: `/${node.file.replace(/\.md$/, "")}`,
+              href: resolveRelative(slug, node.file.replace(/\.md$/, "")),
               class: "canvas-file-link internal",
               "data-slug": node.file.replace(/\.md$/, ""),
               children: filename
@@ -11153,7 +11154,7 @@ function renderNode(node, renderedTexts, embeddedContent) {
         /* @__PURE__ */ jsx("div", { class: "canvas-node-content", children: embedded ? /* @__PURE__ */ jsx("div", { class: "canvas-embed-content", dangerouslySetInnerHTML: { __html: embedded } }) : /* @__PURE__ */ jsx(
           "a",
           {
-            href: `/${node.file.replace(/\.md$/, "")}`,
+            href: resolveRelative(slug, node.file.replace(/\.md$/, "")),
             class: "canvas-file-link internal",
             "data-slug": node.file.replace(/\.md$/, ""),
             children: filename
@@ -11279,6 +11280,7 @@ function renderEdge(edge, nodeMap) {
 var CanvasBody_default = ((userOpts) => {
   const Component = (props) => {
     const fileData = props.fileData;
+    const slug = props.slug;
     const canvasData = fileData.canvasData;
     if (!canvasData) {
       return /* @__PURE__ */ jsx("article", { class: "canvas-page popover-hint", children: /* @__PURE__ */ jsx("p", { children: "No canvas data found." }) });
@@ -11440,7 +11442,7 @@ var CanvasBody_default = ((userOpts) => {
               {
                 class: "canvas-nodes",
                 style: `transform:translate(${-minX + padding}px,${-minY + padding}px)`,
-                children: nodes.map((node) => renderNode(node, renderedTexts, embeddedContent))
+                children: nodes.map((node) => renderNode(node, renderedTexts, embeddedContent, slug))
               }
             ),
             /* @__PURE__ */ jsx(
