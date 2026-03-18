@@ -412,13 +412,13 @@ var canvas_default = `.canvas-page {
 
 @media (max-width: 800px) {
   .page[data-frame=canvas] {
-    --canvas-sidebar-width: calc(100vw - 44px);
+    --canvas-sidebar-width: calc(100vw - 56px);
   }
   .page[data-frame=canvas].canvas-sidebar-open .canvas-frame {
     padding-left: 0;
   }
   .page[data-frame=canvas].canvas-sidebar-open .canvas-sidebar-toggle {
-    left: calc(100vw - 44px);
+    left: var(--canvas-sidebar-width);
   }
   .page[data-frame=canvas].canvas-sidebar-open .canvas-controls {
     top: 48px;
