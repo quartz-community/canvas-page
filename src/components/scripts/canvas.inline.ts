@@ -216,12 +216,17 @@ function initCanvas() {
     ) as HTMLButtonElement | null;
     if (frame && sidebarToggle) {
       const toggleSidebar = () => {
+        const oldRect = container.getBoundingClientRect();
         frame.classList.toggle("canvas-sidebar-open");
-        centerViewport();
-        defaultZoom = zoom;
-        defaultPanX = panX;
-        defaultPanY = panY;
-        updateResetButton();
+
+        requestAnimationFrame(() => {
+          const newRect = container.getBoundingClientRect();
+          const shiftX = newRect.left - oldRect.left;
+          panX += shiftX;
+          defaultPanX += shiftX;
+          applyTransform();
+          updateResetButton();
+        });
       };
 
       sidebarToggle.addEventListener("click", toggleSidebar);
