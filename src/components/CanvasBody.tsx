@@ -233,7 +233,7 @@ function renderEdge(edge: CanvasEdge, nodeMap: Map<string, CanvasNode>): unknown
 export default ((userOpts?: CanvasPageOptions) => {
   const Component: QuartzComponent = (props: QuartzComponentProps) => {
     const fileData = props.fileData as Record<string, unknown>;
-    const slug = props.slug as FullSlug;
+    const slug = (props.fileData.slug ?? "") as FullSlug;
     const canvasData = fileData.canvasData as
       | (CanvasData & { renderedTexts?: Record<string, string> })
       | undefined;

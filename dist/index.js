@@ -11280,7 +11280,7 @@ function renderEdge(edge, nodeMap) {
 var CanvasBody_default = ((userOpts) => {
   const Component = (props) => {
     const fileData = props.fileData;
-    const slug = props.slug;
+    const slug = props.fileData.slug ?? "";
     const canvasData = fileData.canvasData;
     if (!canvasData) {
       return /* @__PURE__ */ jsx("article", { class: "canvas-page popover-hint", children: /* @__PURE__ */ jsx("p", { children: "No canvas data found." }) });
