@@ -418,7 +418,7 @@ var canvas_default = `.canvas-page {
     padding-left: 0;
   }
   .page[data-frame=canvas].canvas-sidebar-open .canvas-sidebar-toggle {
-    left: var(--canvas-sidebar-width);
+    left: calc(var(--canvas-sidebar-width) + 12px);
   }
   .page[data-frame=canvas].canvas-sidebar-open .canvas-controls {
     top: 48px;
