@@ -11017,15 +11017,15 @@ var canvas_default = `.canvas-page {
   display: block;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 800px) {
   .page[data-frame=canvas] {
-    --canvas-sidebar-width: min(320px, 85vw);
+    --canvas-sidebar-width: calc(100vw - 44px);
   }
   .page[data-frame=canvas].canvas-sidebar-open .canvas-frame {
     padding-left: 0;
   }
   .page[data-frame=canvas].canvas-sidebar-open .canvas-sidebar-toggle {
-    left: min(var(--canvas-sidebar-width) + 12px, 100vw - 44px);
+    left: calc(100vw - 44px);
   }
   .page[data-frame=canvas].canvas-sidebar-open .canvas-controls {
     top: 48px;
