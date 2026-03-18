@@ -234,33 +234,6 @@ function initCanvas() {
       cleanupFns.push(() => {
         sidebarToggle.removeEventListener("click", toggleSidebar);
       });
-
-      const sidebar = frame.querySelector(".canvas-sidebar") as HTMLElement | null;
-      if (sidebar) {
-        const explorerContents = sidebar.querySelectorAll(".explorer-content");
-        for (const content of Array.from(explorerContents)) {
-          const sentinel = content.querySelector(".overflow-end");
-          if (!sentinel) continue;
-
-          const observer = new IntersectionObserver(
-            (entries) => {
-              for (const entry of entries) {
-                const parentUl = entry.target.parentElement;
-                if (!parentUl) return;
-                if (entry.isIntersecting) {
-                  parentUl.classList.remove("gradient-active");
-                } else {
-                  parentUl.classList.add("gradient-active");
-                }
-              }
-            },
-            { root: content },
-          );
-
-          observer.observe(sentinel);
-          cleanupFns.push(() => observer.disconnect());
-        }
-      }
     }
 
     const zoomInBtn = container.querySelector(".canvas-zoom-in") as HTMLButtonElement | null;
