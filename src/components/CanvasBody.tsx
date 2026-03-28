@@ -2,9 +2,10 @@ import type {
   QuartzComponent,
   QuartzComponentProps,
   QuartzComponentConstructor,
+  FilePath,
   FullSlug,
 } from "@quartz-community/types";
-import { resolveRelative } from "@quartz-community/utils/path";
+import { resolveRelative, slugifyFilePath } from "@quartz-community/utils/path";
 import type { CanvasData, CanvasNode, CanvasEdge, CanvasPageOptions } from "../types";
 import { CANVAS_PRESET_COLORS } from "../types";
 import style from "./styles/canvas.scss";
@@ -73,14 +74,15 @@ function renderNode(
 
     case "file": {
       const filename = node.file.split("/").pop()?.replace(/\.md$/, "") ?? node.file;
+      const fileSlug = slugifyFilePath(node.file as FilePath, true) as FullSlug;
       const embedded = embeddedContent[node.id];
       return (
         <div class="canvas-node canvas-node-file" data-node-id={node.id} style={styleStr}>
           <div class="canvas-file-label">
             <a
-              href={resolveRelative(slug, node.file.replace(/\.md$/, "") as FullSlug)}
+              href={resolveRelative(slug, fileSlug)}
               class="canvas-file-link internal"
-              data-slug={node.file.replace(/\.md$/, "")}
+              data-slug={fileSlug}
             >
               {filename}
             </a>
@@ -91,9 +93,9 @@ function renderNode(
               <div class="canvas-embed-content" dangerouslySetInnerHTML={{ __html: embedded }} />
             ) : (
               <a
-                href={resolveRelative(slug, node.file.replace(/\.md$/, "") as FullSlug)}
+                href={resolveRelative(slug, fileSlug)}
                 class="canvas-file-link internal"
-                data-slug={node.file.replace(/\.md$/, "")}
+                data-slug={fileSlug}
               >
                 {filename}
               </a>

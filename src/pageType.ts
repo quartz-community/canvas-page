@@ -1,10 +1,12 @@
 import type {
   QuartzPageTypePlugin,
   PageMatcher,
+  FilePath,
   FullSlug,
   VirtualPage,
   ProcessedContent,
 } from "@quartz-community/types";
+import { slugifyFilePath } from "@quartz-community/utils/path";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { micromark } from "micromark";
@@ -43,7 +45,7 @@ function buildEmbeddedContent(
   for (const node of data.nodes ?? []) {
     if (node.type !== "file") continue;
 
-    const fileRef = node.file.replace(/\.md$/, "");
+    const fileRef = slugifyFilePath(node.file as FilePath, true);
     const match = content.find(([, vfile]) => {
       const slug = vfile.data.slug as string | undefined;
       if (!slug) return false;
@@ -89,8 +91,12 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
         continue;
       }
 
-      const slug = filePath.replace(/\.canvas$/, "") as unknown as FullSlug;
-      const baseName = slug.split("/").pop() ?? "Canvas";
+      const baseName =
+        filePath
+          .replace(/\.canvas$/, "")
+          .split("/")
+          .pop() ?? "Canvas";
+      const slug = slugifyFilePath(filePath, true) as FullSlug;
       const processedData = preprocessCanvasData(canvasData);
       const embeddedContent = buildEmbeddedContent(canvasData, content);
 

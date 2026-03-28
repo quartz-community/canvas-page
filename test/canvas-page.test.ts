@@ -57,4 +57,19 @@ describe("CanvasPage", () => {
     expect(pages[0]!.title).toBe("project");
     expect(pages[0]!.data).toHaveProperty("canvasData");
   });
+
+  it("normalizes spaces to hyphens in canvas slugs", () => {
+    const ctx = createCtx({
+      allFiles: ["Study Notes/Concept Civic Board.canvas" as FilePath],
+    });
+
+    const content: ProcessedContent[] = [];
+    const cfg = ctx.cfg.configuration;
+
+    const pages = plugin.generate!({ content, cfg, ctx });
+
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.slug).toBe("Study-Notes/Concept-Civic-Board");
+    expect(pages[0]!.title).toBe("Concept Civic Board");
+  });
 });

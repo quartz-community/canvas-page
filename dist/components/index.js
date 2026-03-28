@@ -1,4 +1,4 @@
-import { resolveRelative } from '@quartz-community/utils/path';
+import { slugifyFilePath, resolveRelative } from '@quartz-community/utils/path';
 import { jsx, jsxs } from 'preact/jsx-runtime';
 
 // src/components/CanvasBody.tsx
@@ -547,15 +547,16 @@ function renderNode(node, renderedTexts, embeddedContent, slug) {
     }
     case "file": {
       const filename = node.file.split("/").pop()?.replace(/\.md$/, "") ?? node.file;
+      const fileSlug = slugifyFilePath(node.file, true);
       const embedded = embeddedContent[node.id];
       return /* @__PURE__ */ jsxs("div", { class: "canvas-node canvas-node-file", "data-node-id": node.id, style: styleStr, children: [
         /* @__PURE__ */ jsxs("div", { class: "canvas-file-label", children: [
           /* @__PURE__ */ jsx(
             "a",
             {
-              href: resolveRelative(slug, node.file.replace(/\.md$/, "")),
+              href: resolveRelative(slug, fileSlug),
               class: "canvas-file-link internal",
-              "data-slug": node.file.replace(/\.md$/, ""),
+              "data-slug": fileSlug,
               children: filename
             }
           ),
@@ -564,9 +565,9 @@ function renderNode(node, renderedTexts, embeddedContent, slug) {
         /* @__PURE__ */ jsx("div", { class: "canvas-node-content", children: embedded ? /* @__PURE__ */ jsx("div", { class: "canvas-embed-content", dangerouslySetInnerHTML: { __html: embedded } }) : /* @__PURE__ */ jsx(
           "a",
           {
-            href: resolveRelative(slug, node.file.replace(/\.md$/, "")),
+            href: resolveRelative(slug, fileSlug),
             class: "canvas-file-link internal",
-            "data-slug": node.file.replace(/\.md$/, ""),
+            "data-slug": fileSlug,
             children: filename
           }
         ) })

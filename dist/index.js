@@ -1,6 +1,6 @@
+import { slugifyFilePath, resolveRelative } from '@quartz-community/utils/path';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { resolveRelative } from '@quartz-community/utils/path';
 import { jsxs, jsx } from 'preact/jsx-runtime';
 
 var __defProp = Object.defineProperty;
@@ -11154,15 +11154,16 @@ function renderNode(node, renderedTexts, embeddedContent, slug) {
     }
     case "file": {
       const filename = node.file.split("/").pop()?.replace(/\.md$/, "") ?? node.file;
+      const fileSlug = slugifyFilePath(node.file, true);
       const embedded = embeddedContent[node.id];
       return /* @__PURE__ */ jsxs("div", { class: "canvas-node canvas-node-file", "data-node-id": node.id, style: styleStr, children: [
         /* @__PURE__ */ jsxs("div", { class: "canvas-file-label", children: [
           /* @__PURE__ */ jsx(
             "a",
             {
-              href: resolveRelative(slug, node.file.replace(/\.md$/, "")),
+              href: resolveRelative(slug, fileSlug),
               class: "canvas-file-link internal",
-              "data-slug": node.file.replace(/\.md$/, ""),
+              "data-slug": fileSlug,
               children: filename
             }
           ),
@@ -11171,9 +11172,9 @@ function renderNode(node, renderedTexts, embeddedContent, slug) {
         /* @__PURE__ */ jsx("div", { class: "canvas-node-content", children: embedded ? /* @__PURE__ */ jsx("div", { class: "canvas-embed-content", dangerouslySetInnerHTML: { __html: embedded } }) : /* @__PURE__ */ jsx(
           "a",
           {
-            href: resolveRelative(slug, node.file.replace(/\.md$/, "")),
+            href: resolveRelative(slug, fileSlug),
             class: "canvas-file-link internal",
-            "data-slug": node.file.replace(/\.md$/, ""),
+            "data-slug": fileSlug,
             children: filename
           }
         ) })
@@ -11502,7 +11503,7 @@ function buildEmbeddedContent(data, content3) {
   const embeddedHtml = {};
   for (const node of data.nodes ?? []) {
     if (node.type !== "file") continue;
-    const fileRef = node.file.replace(/\.md$/, "");
+    const fileRef = slugifyFilePath(node.file, true);
     const match = content3.find(([, vfile]) => {
       const slug = vfile.data.slug;
       if (!slug) return false;
@@ -11540,8 +11541,8 @@ var CanvasPage = (opts) => ({
       } catch {
         continue;
       }
-      const slug = filePath.replace(/\.canvas$/, "");
-      const baseName = slug.split("/").pop() ?? "Canvas";
+      const baseName = filePath.replace(/\.canvas$/, "").split("/").pop() ?? "Canvas";
+      const slug = slugifyFilePath(filePath, true);
       const processedData = preprocessCanvasData(canvasData);
       const embeddedContent = buildEmbeddedContent(canvasData, content3);
       virtualPages.push({
