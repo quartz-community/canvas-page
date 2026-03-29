@@ -547,8 +547,20 @@ function renderNode(node, renderedTexts, embeddedContent, slug) {
     }
     case "file": {
       const filename = node.file.split("/").pop()?.replace(/\.md$/, "") ?? node.file;
-      const fileSlug = slugifyFilePath(node.file, true);
+      const fileSlug = slugifyFilePath(node.file);
       const embedded = embeddedContent[node.id];
+      const isImage = /\.(png|jpe?g|gif|svg|webp|avif|bmp|ico)$/i.test(node.file);
+      if (isImage) {
+        return /* @__PURE__ */ jsx(
+          "div",
+          {
+            class: "canvas-node canvas-node-file canvas-node-image",
+            "data-node-id": node.id,
+            style: styleStr,
+            children: /* @__PURE__ */ jsx("img", { src: resolveRelative(slug, fileSlug), alt: filename, loading: "lazy" })
+          }
+        );
+      }
       return /* @__PURE__ */ jsxs("div", { class: "canvas-node canvas-node-file", "data-node-id": node.id, style: styleStr, children: [
         /* @__PURE__ */ jsxs("div", { class: "canvas-file-label", children: [
           /* @__PURE__ */ jsx(

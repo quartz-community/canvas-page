@@ -74,8 +74,22 @@ function renderNode(
 
     case "file": {
       const filename = node.file.split("/").pop()?.replace(/\.md$/, "") ?? node.file;
-      const fileSlug = slugifyFilePath(node.file as FilePath, true) as FullSlug;
+      const fileSlug = slugifyFilePath(node.file as FilePath) as FullSlug;
       const embedded = embeddedContent[node.id];
+      const isImage = /\.(png|jpe?g|gif|svg|webp|avif|bmp|ico)$/i.test(node.file);
+
+      if (isImage) {
+        return (
+          <div
+            class="canvas-node canvas-node-file canvas-node-image"
+            data-node-id={node.id}
+            style={styleStr}
+          >
+            <img src={resolveRelative(slug, fileSlug)} alt={filename} loading="lazy" />
+          </div>
+        );
+      }
+
       return (
         <div class="canvas-node canvas-node-file" data-node-id={node.id} style={styleStr}>
           <div class="canvas-file-label">
