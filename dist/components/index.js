@@ -1,7 +1,77 @@
-import { slugifyFilePath, resolveRelative } from '@quartz-community/utils/path';
+import 'github-slugger';
 import { jsx, jsxs } from 'preact/jsx-runtime';
 
-// src/components/CanvasBody.tsx
+// node_modules/@quartz-community/utils/dist/path.js
+function simplifySlug(fp) {
+  const res = stripSlashes(trimSuffix(fp, "index"), true);
+  return res.length === 0 ? "/" : res;
+}
+function slugifyFilePath(fp, excludeExt) {
+  fp = stripSlashes(fp);
+  const ext = getFileExtension(fp);
+  const withoutFileExt = fp.replace(new RegExp(ext + "$"), "");
+  const finalExt = [".md", ".html", void 0].includes(ext) ? "" : ext;
+  let slug2 = _sluggify(withoutFileExt);
+  if (endsWith(slug2, "_index")) {
+    slug2 = slug2.replace(/_index$/, "index");
+  }
+  return slug2 + (finalExt ?? "");
+}
+function joinSegments(...args) {
+  if (args.length === 0) {
+    return "";
+  }
+  let joined = args.filter((segment) => segment !== "" && segment !== "/").map((segment) => stripSlashes(segment)).join("/");
+  const first = args[0];
+  const last = args[args.length - 1];
+  if (first?.startsWith("/")) {
+    joined = "/" + joined;
+  }
+  if (last?.endsWith("/")) {
+    joined = joined + "/";
+  }
+  return joined;
+}
+function endsWith(s, suffix) {
+  return s === suffix || s.endsWith("/" + suffix);
+}
+function trimSuffix(s, suffix) {
+  if (endsWith(s, suffix)) {
+    s = s.slice(0, -suffix.length);
+  }
+  return s;
+}
+function stripSlashes(s, onlyStripPrefix) {
+  if (s.startsWith("/")) {
+    s = s.substring(1);
+  }
+  if (!onlyStripPrefix && s.endsWith("/")) {
+    s = s.slice(0, -1);
+  }
+  return s;
+}
+function getFileExtension(s) {
+  return s.match(/\.[A-Za-z0-9]+$/)?.[0];
+}
+function pathToRoot(slug2) {
+  let rootPath = slug2.split("/").filter((x) => x !== "").slice(0, -1).map((_) => "..").join("/");
+  if (rootPath.length === 0) {
+    rootPath = ".";
+  }
+  return rootPath;
+}
+function resolveRelative(current, target) {
+  const res = joinSegments(pathToRoot(current), simplifySlug(target));
+  return res;
+}
+function slugifyPath(s) {
+  return s.split("/").map(
+    (segment) => segment.replace(/\s/g, "-").replace(/&/g, "-and-").replace(/%/g, "-percent").replace(/\?/g, "").replace(/#/g, "")
+  ).join("/").replace(/\/$/, "");
+}
+function _sluggify(s) {
+  return slugifyPath(s);
+}
 
 // src/types.ts
 var CANVAS_PRESET_COLORS = {
@@ -528,7 +598,7 @@ function getEdgeAnchor(node, side) {
       return { x: cx, y: cy };
   }
 }
-function renderNode(node, renderedTexts, embeddedContent, slug) {
+function renderNode(node, renderedTexts, embeddedContent, slug2) {
   const color = resolveColor(node.color);
   const baseStyle = {
     left: `${node.x}px`,
@@ -557,7 +627,7 @@ function renderNode(node, renderedTexts, embeddedContent, slug) {
             class: "canvas-node canvas-node-file canvas-node-image",
             "data-node-id": node.id,
             style: styleStr,
-            children: /* @__PURE__ */ jsx("img", { src: resolveRelative(slug, fileSlug), alt: filename, loading: "lazy" })
+            children: /* @__PURE__ */ jsx("img", { src: resolveRelative(slug2, fileSlug), alt: filename, loading: "lazy" })
           }
         );
       }
@@ -566,7 +636,7 @@ function renderNode(node, renderedTexts, embeddedContent, slug) {
           /* @__PURE__ */ jsx(
             "a",
             {
-              href: resolveRelative(slug, fileSlug),
+              href: resolveRelative(slug2, fileSlug),
               class: "canvas-file-link internal",
               "data-slug": fileSlug,
               children: filename
@@ -577,7 +647,7 @@ function renderNode(node, renderedTexts, embeddedContent, slug) {
         /* @__PURE__ */ jsx("div", { class: "canvas-node-content", children: embedded ? /* @__PURE__ */ jsx("div", { class: "canvas-embed-content", dangerouslySetInnerHTML: { __html: embedded } }) : /* @__PURE__ */ jsx(
           "a",
           {
-            href: resolveRelative(slug, fileSlug),
+            href: resolveRelative(slug2, fileSlug),
             class: "canvas-file-link internal",
             "data-slug": fileSlug,
             children: filename
@@ -703,7 +773,7 @@ function renderEdge(edge, nodeMap) {
 var CanvasBody_default = ((userOpts) => {
   const Component = (props) => {
     const fileData = props.fileData;
-    const slug = props.fileData.slug ?? "";
+    const slug2 = props.fileData.slug ?? "";
     const canvasData = fileData.canvasData;
     if (!canvasData) {
       return /* @__PURE__ */ jsx("article", { class: "canvas-page popover-hint", children: /* @__PURE__ */ jsx("p", { children: "No canvas data found." }) });
@@ -865,7 +935,7 @@ var CanvasBody_default = ((userOpts) => {
               {
                 class: "canvas-nodes",
                 style: `transform:translate(${-minX + padding}px,${-minY + padding}px)`,
-                children: nodes.map((node) => renderNode(node, renderedTexts, embeddedContent, slug))
+                children: nodes.map((node) => renderNode(node, renderedTexts, embeddedContent, slug2))
               }
             ),
             /* @__PURE__ */ jsx(
