@@ -53,9 +53,24 @@ describe("CanvasPage", () => {
     const pages = plugin.generate!({ content, cfg, ctx });
 
     expect(pages).toHaveLength(1);
-    expect(pages[0]!.slug).toBe("notes/project");
+    expect(pages[0]!.slug).toBe("notes/project.canvas");
     expect(pages[0]!.title).toBe("project");
     expect(pages[0]!.data).toHaveProperty("canvasData");
+  });
+
+  it("keeps the .canvas extension in virtual page slugs", () => {
+    const ctx = createCtx({
+      allFiles: ["maps/Team Board.canvas" as FilePath],
+    });
+
+    const content: ProcessedContent[] = [];
+    const cfg = ctx.cfg.configuration;
+
+    const pages = plugin.generate!({ content, cfg, ctx });
+
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.slug).toBe("maps/Team-Board.canvas");
+    expect(pages[0]!.slug.endsWith(".canvas")).toBe(true);
   });
 
   it("normalizes spaces to hyphens in canvas slugs", () => {
@@ -69,7 +84,7 @@ describe("CanvasPage", () => {
     const pages = plugin.generate!({ content, cfg, ctx });
 
     expect(pages).toHaveLength(1);
-    expect(pages[0]!.slug).toBe("Study-Notes/Concept-Civic-Board");
+    expect(pages[0]!.slug).toBe("Study-Notes/Concept-Civic-Board.canvas");
     expect(pages[0]!.title).toBe("Concept Civic Board");
   });
 });

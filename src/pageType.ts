@@ -96,7 +96,7 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
           .replace(/\.canvas$/, "")
           .split("/")
           .pop() ?? "Canvas";
-      const slug = slugifyFilePath(filePath, true) as FullSlug;
+      const slug = slugifyFilePath(filePath) as FullSlug;
       const processedData = preprocessCanvasData(canvasData);
       const embeddedContent = buildEmbeddedContent(canvasData, content);
 

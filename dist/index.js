@@ -11624,7 +11624,7 @@ var CanvasPage = (opts) => ({
         continue;
       }
       const baseName = filePath.replace(/\.canvas$/, "").split("/").pop() ?? "Canvas";
-      const slug2 = slugifyFilePath(filePath, true);
+      const slug2 = slugifyFilePath(filePath);
       const processedData = preprocessCanvasData(canvasData);
       const embeddedContent = buildEmbeddedContent(canvasData, content3);
       virtualPages.push({
