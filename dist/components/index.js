@@ -71,7 +71,7 @@ function resolveRelative(current, target) {
 }
 function slugifyPath(s) {
   return s.split("/").map(
-    (segment) => segment.replace(/\s/g, "-").replace(/&/g, "-and-").replace(/%/g, "-percent").replace(/\?/g, "").replace(/#/g, "")
+    (segment) => segment.replace(/\s/g, "-").replace(/&/g, "-and-").replace(/%/g, "-percent").replace(/\?/g, "").replace(/#/g, "").toLowerCase()
   ).join("/").replace(/\/$/, "");
 }
 function _sluggify(s) {
