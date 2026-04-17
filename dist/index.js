@@ -8,6 +8,11 @@ var __export = (target, all2) => {
   for (var name in all2)
     __defProp(target, name, { get: all2[name], enumerable: true });
 };
+function isRelativeURL(s) {
+  const validStart = /^\.{1,2}/.test(s);
+  const validEnding = !endsWith(s, "index");
+  return validStart && validEnding && ![".md", ".html"].includes(getFileExtension(s) ?? "");
+}
 function simplifySlug(fp) {
   const res = stripSlashes(trimSuffix(fp, "index"), true);
   return res.length === 0 ? "/" : res;
@@ -79,6 +84,24 @@ function slugifyPath(s) {
   return s.split("/").map(
     (segment) => segment.replace(/\s/g, "-").replace(/&/g, "-and-").replace(/%/g, "-percent").replace(/\?/g, "").replace(/#/g, "").toLowerCase()
   ).join("/").replace(/\/$/, "");
+}
+function normalizeHastElement(rawEl, curBase, newBase) {
+  const el = structuredClone(rawEl);
+  _rebaseHastElement(el, "src", curBase, newBase);
+  _rebaseHastElement(el, "href", curBase, newBase);
+  if (el.children) {
+    el.children = el.children.map(
+      (child) => child.type === "element" ? normalizeHastElement(child, curBase, newBase) : child
+    );
+  }
+  return el;
+}
+function _rebaseHastElement(el, attr, curBase, newBase) {
+  const value = el.properties?.[attr];
+  if (value === void 0 || value === null) return;
+  const href = String(value);
+  if (!isRelativeURL(href)) return;
+  el.properties[attr] = joinSegments(resolveRelative(curBase, newBase), "..", href);
 }
 function _sluggify(s) {
   return slugifyPath(s);
@@ -11586,7 +11609,7 @@ function preprocessCanvasData(data) {
   }
   return { ...data, renderedTexts };
 }
-function buildEmbeddedContent(data, content3) {
+function buildEmbeddedContent(data, content3, canvasSlug) {
   const embeddedHtml = {};
   for (const node of data.nodes ?? []) {
     if (node.type !== "file") continue;
@@ -11598,9 +11621,16 @@ function buildEmbeddedContent(data, content3) {
     });
     if (match) {
       const [, vfile] = match;
-      const htmlAst = vfile.data.htmlAst;
-      if (htmlAst) {
-        embeddedHtml[node.id] = toHtml(htmlAst, {
+      const sourceHtmlAst = vfile.data.htmlAst;
+      const sourceSlug = vfile.data.slug;
+      if (sourceHtmlAst && sourceSlug) {
+        const rebased = {
+          ...sourceHtmlAst,
+          children: sourceHtmlAst.children.map(
+            (child) => child.type === "element" ? normalizeHastElement(child, canvasSlug, sourceSlug) : child
+          )
+        };
+        embeddedHtml[node.id] = toHtml(rebased, {
           allowDangerousHtml: true
         });
       }
@@ -11631,7 +11661,7 @@ var CanvasPage = (opts) => ({
       const baseName = filePath.replace(/\.canvas$/, "").split("/").pop() ?? "Canvas";
       const slug2 = slugifyFilePath(filePath);
       const processedData = preprocessCanvasData(canvasData);
-      const embeddedContent = buildEmbeddedContent(canvasData, content3);
+      const embeddedContent = buildEmbeddedContent(canvasData, content3, slug2);
       virtualPages.push({
         slug: slug2,
         title: baseName,

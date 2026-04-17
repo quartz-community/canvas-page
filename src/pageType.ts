@@ -6,12 +6,13 @@ import type {
   VirtualPage,
   ProcessedContent,
 } from "@quartz-community/types";
-import { slugifyFilePath } from "@quartz-community/utils/path";
+import { slugifyFilePath, normalizeHastElement } from "@quartz-community/utils/path";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { micromark } from "micromark";
 import { gfm, gfmHtml } from "micromark-extension-gfm";
 import { toHtml } from "hast-util-to-html";
+import type { Element as HastElement, Root as HastRoot } from "hast";
 import CanvasBody from "./components/CanvasBody";
 import type { CanvasData, CanvasPageOptions } from "./types";
 
@@ -39,6 +40,7 @@ function preprocessCanvasData(
 function buildEmbeddedContent(
   data: CanvasData,
   content: ProcessedContent[],
+  canvasSlug: FullSlug,
 ): Record<string, string> {
   const embeddedHtml: Record<string, string> = {};
 
@@ -54,9 +56,18 @@ function buildEmbeddedContent(
 
     if (match) {
       const [, vfile] = match;
-      const htmlAst = (vfile.data as Record<string, unknown>).htmlAst;
-      if (htmlAst) {
-        embeddedHtml[node.id] = toHtml(htmlAst as Parameters<typeof toHtml>[0], {
+      const sourceHtmlAst = (vfile.data as Record<string, unknown>).htmlAst as HastRoot | undefined;
+      const sourceSlug = vfile.data.slug as FullSlug | undefined;
+      if (sourceHtmlAst && sourceSlug) {
+        const rebased: HastRoot = {
+          ...sourceHtmlAst,
+          children: sourceHtmlAst.children.map((child) =>
+            child.type === "element"
+              ? (normalizeHastElement(child as HastElement, canvasSlug, sourceSlug) as typeof child)
+              : child,
+          ),
+        };
+        embeddedHtml[node.id] = toHtml(rebased as Parameters<typeof toHtml>[0], {
           allowDangerousHtml: true,
         });
       }
@@ -98,7 +109,7 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
           .pop() ?? "Canvas";
       const slug = slugifyFilePath(filePath) as FullSlug;
       const processedData = preprocessCanvasData(canvasData);
-      const embeddedContent = buildEmbeddedContent(canvasData, content);
+      const embeddedContent = buildEmbeddedContent(canvasData, content, slug);
 
       virtualPages.push({
         slug,
