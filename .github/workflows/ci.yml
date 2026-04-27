@@ -28,6 +28,15 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify dist is up to date
+        run: |
+          if git diff --quiet dist/; then
+            echo "dist/ is up to date"
+          else
+            echo "::error::dist/ is stale. Run 'npm run build' and commit the result."
+            git diff --stat dist/
+            exit 1
+          fi
       - name: Verify dist externals
         run: |
           node -e "
@@ -37,7 +46,7 @@ jobs:
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
           const peerDeps = Object.keys(pkg.peerDependencies || {});
           const builtins = new Set(['assert','buffer','child_process','cluster','console','constants','crypto','dgram','dns','domain','events','fs','http','http2','https','inspector','module','net','os','path','perf_hooks','process','punycode','querystring','readline','repl','stream','string_decoder','sys','timers','tls','trace_events','tty','url','util','v8','vm','wasi','worker_threads','zlib']);
-          const shared = ['@quartz-community/','preact','@jackyzha0/quartz','vfile'];
+          const shared = ['@quartz-community/','preact','@jackyzha0/quartz','vfile','unified'];
           const content = fs.readFileSync(dist, 'utf-8');
           const re = /^\s*(?:import\s+.*\s+from|export\s+.*\s+from)\s+[\"']([^\"'./][^\"']*)[\"']/gm;
           const unexpected = new Set();
