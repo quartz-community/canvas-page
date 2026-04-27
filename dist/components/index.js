@@ -1,5 +1,4 @@
-import 'github-slugger';
-import { jsx, jsxs } from 'preact/jsx-runtime';
+// node_modules/github-slugger/index.js
 
 // node_modules/@quartz-community/utils/dist/path.js
 function simplifySlug(fp) {
@@ -37,29 +36,29 @@ function joinSegments(...args) {
   }
   return joined;
 }
-function endsWith(s, suffix) {
-  return s === suffix || s.endsWith("/" + suffix);
+function endsWith(s2, suffix) {
+  return s2 === suffix || s2.endsWith("/" + suffix);
 }
-function trimSuffix(s, suffix) {
-  if (endsWith(s, suffix)) {
-    s = s.slice(0, -suffix.length);
+function trimSuffix(s2, suffix) {
+  if (endsWith(s2, suffix)) {
+    s2 = s2.slice(0, -suffix.length);
   }
-  return s;
+  return s2;
 }
-function stripSlashes(s, onlyStripPrefix) {
-  if (s.startsWith("/")) {
-    s = s.substring(1);
+function stripSlashes(s2, onlyStripPrefix) {
+  if (s2.startsWith("/")) {
+    s2 = s2.substring(1);
   }
-  if (!onlyStripPrefix && s.endsWith("/")) {
-    s = s.slice(0, -1);
+  if (!onlyStripPrefix && s2.endsWith("/")) {
+    s2 = s2.slice(0, -1);
   }
-  return s;
+  return s2;
 }
-function getFileExtension(s) {
-  return s.match(/\.[A-Za-z0-9]+$/)?.[0];
+function getFileExtension(s2) {
+  return s2.match(/\.[A-Za-z0-9]+$/)?.[0];
 }
 function pathToRoot(slug2) {
-  let rootPath = slug2.split("/").filter((x) => x !== "").slice(0, -1).map((_) => "..").join("/");
+  let rootPath = slug2.split("/").filter((x2) => x2 !== "").slice(0, -1).map((_2) => "..").join("/");
   if (rootPath.length === 0) {
     rootPath = ".";
   }
@@ -69,13 +68,13 @@ function resolveRelative(current, target) {
   const res = joinSegments(pathToRoot(current), simplifySlug(target));
   return res;
 }
-function slugifyPath(s) {
-  return s.split("/").map(
+function slugifyPath(s2) {
+  return s2.split("/").map(
     (segment) => segment.replace(/\s/g, "-").replace(/&/g, "-and-").replace(/%/g, "-percent").replace(/\?/g, "").replace(/#/g, "").toLowerCase()
   ).join("/").replace(/\/$/, "");
 }
-function _sluggify(s) {
-  return slugifyPath(s);
+function _sluggify(s2) {
+  return slugifyPath(s2);
 }
 
 // src/types.ts
@@ -581,6 +580,28 @@ var canvas_default = `.canvas-page {
 
 // src/components/scripts/canvas.inline.ts
 var canvas_inline_default = 'function K(){let E=document.querySelectorAll(".canvas-container");if(E.length!==0)for(let t of Array.from(E)){if(t.dataset.initialized==="true")continue;t.dataset.initialized="true";let M=t.querySelector(".canvas-viewport");if(!M)continue;let j=t.dataset.enableInteraction!=="false",w=parseFloat(t.dataset.minZoom??"")||.1,H=parseFloat(t.dataset.maxZoom??"")||5,o=parseFloat(t.dataset.initialZoom??"")||1,c=0,a=0,Y=!1,D=0,O=0,v=()=>{M.style.transform=`translate(${c}px, ${a}px) scale(${o})`},q=()=>{let n=t.getBoundingClientRect(),l=parseFloat(M.style.width)||1e3,u=parseFloat(M.style.height)||1e3,r=n.width/l,d=n.height/u;o=Math.min(r,d,1)*.9,o=Math.max(w,Math.min(H,o)),c=(n.width-l*o)/2,a=(n.height-u*o)/2,v()};q();let F=o,B=c,S=a,L=t.querySelector(".canvas-reset-view"),m=()=>{if(!L)return;let n=Math.abs(o-F)>.001||Math.abs(c-B)>1||Math.abs(a-S)>1;L.style.display=n?"flex":"none"},f=[];if(j){let n=e=>{let s=e.target instanceof HTMLElement?e.target.closest(".canvas-node-content"):null;if(s&&s.scrollHeight>s.clientHeight){let b=s.scrollTop<=0,A=s.scrollTop+s.clientHeight>=s.scrollHeight-1,x=e.deltaY>0,J=e.deltaY<0;if(!(b&&J)&&!(A&&x))return}e.preventDefault();let i=t.getBoundingClientRect(),T=e.clientX-i.left,p=e.clientY-i.top,g=o,X=e.deltaY>0?.9:1.1;o=Math.max(w,Math.min(H,o*X)),c=T-(T-c)*(o/g),a=p-(p-a)*(o/g),v(),m()},l=e=>{if(e.button===0&&!(e.target instanceof HTMLElement&&(e.target.closest("a")||e.target.closest("button")))){if(e.target instanceof HTMLElement){let s=e.target.closest(".canvas-node-content");if(s&&s.scrollHeight>s.clientHeight){let i=s.getBoundingClientRect();if(e.clientX>=i.right-16)return}}Y=!0,D=e.clientX-c,O=e.clientY-a,t.setPointerCapture(e.pointerId)}},u=e=>{Y&&(c=e.clientX-D,a=e.clientY-O,v(),m())},r=()=>{Y=!1};t.addEventListener("wheel",n,{passive:!1}),t.addEventListener("pointerdown",l),t.addEventListener("pointermove",u),t.addEventListener("pointerup",r);let d=0,h=0,I=0,z=!1,N=e=>{if(e.length<2||!e[0]||!e[1])return 0;let s=e[0].clientX-e[1].clientX,i=e[0].clientY-e[1].clientY;return Math.sqrt(s*s+i*i)},U=e=>{if(e.touches.length===2){let s=e.touches[0],i=e.touches[1];if(!s||!i)return;e.preventDefault(),z=!0,Y=!1,d=N(e.touches),h=(s.clientX+i.clientX)/2,I=(s.clientY+i.clientY)/2}},W=e=>{if(e.touches.length===2&&z){let s=e.touches[0],i=e.touches[1];if(!s||!i)return;e.preventDefault();let T=N(e.touches),p=(s.clientX+i.clientX)/2,g=(s.clientY+i.clientY)/2,X=t.getBoundingClientRect(),P=p-X.left,b=g-X.top,A=T/d,x=o;o=Math.max(w,Math.min(H,o*A)),c=P-(P-c)*(o/x),a=b-(b-a)*(o/x),c+=p-h,a+=g-I,d=T,h=p,I=g,v(),m()}},V=e=>{e.touches.length<2&&(z=!1)};t.addEventListener("touchstart",U,{passive:!1}),t.addEventListener("touchmove",W,{passive:!1}),t.addEventListener("touchend",V),f.push(()=>{t.removeEventListener("wheel",n),t.removeEventListener("pointerdown",l),t.removeEventListener("pointermove",u),t.removeEventListener("pointerup",r),t.removeEventListener("touchstart",U),t.removeEventListener("touchmove",W),t.removeEventListener("touchend",V)})}let C=t.closest(\'.page[data-frame="canvas"]\'),R=C?.querySelector(".canvas-sidebar-toggle");if(C&&R){let n=()=>{let l=t.getBoundingClientRect();C.classList.toggle("canvas-sidebar-open"),requestAnimationFrame(()=>{let r=t.getBoundingClientRect().left-l.left;c+=r,B+=r,v(),m()})};R.addEventListener("click",n),f.push(()=>{R.removeEventListener("click",n)})}let k=t.querySelector(".canvas-zoom-in"),Z=t.querySelector(".canvas-zoom-out"),$=n=>{let l=t.getBoundingClientRect(),u=l.width/2,r=l.height/2,d=o;o=Math.max(w,Math.min(H,o*n)),c=u-(u-c)*(o/d),a=r-(r-a)*(o/d),v(),m()};if(k){let n=()=>{$(1.25)};k.addEventListener("click",n),f.push(()=>k.removeEventListener("click",n))}if(Z){let n=()=>{$(.8)};Z.addEventListener("click",n),f.push(()=>Z.removeEventListener("click",n))}if(L){let n=()=>{q(),F=o,B=c,S=a,m()};L.addEventListener("click",n),f.push(()=>L.removeEventListener("click",n))}let y=t.querySelector(".canvas-fullscreen-toggle");if(y){let n=y.querySelector(".canvas-fullscreen-enter"),l=y.querySelector(".canvas-fullscreen-exit"),u=()=>{let h=document.fullscreenElement===t;n&&(n.style.display=h?"none":""),l&&(l.style.display=h?"":"none")},r=()=>{document.fullscreenElement===t?document.exitFullscreen():t.requestFullscreen()},d=()=>{u(),requestAnimationFrame(()=>{q(),F=o,B=c,S=a,m()})};y.addEventListener("click",r),document.addEventListener("fullscreenchange",d),f.push(()=>{y.removeEventListener("click",r),document.removeEventListener("fullscreenchange",d)})}let G=t.querySelectorAll(".canvas-iframe-wrapper iframe");for(let n of Array.from(G))n.addEventListener("error",()=>{let l=n.parentElement?.querySelector(".canvas-iframe-fallback");l&&(n.style.display="none",l.style.display="flex")});typeof window<"u"&&window.addCleanup&&window.addCleanup(()=>{for(let n of f)n();t.dataset.initialized="false"})}}if(typeof document<"u"){let E=()=>{K()};document.addEventListener("nav",E),document.addEventListener("render",E)}\n';
+var l;
+l = { __e: function(n2, l2, u3, t2) {
+  for (var i2, r2, o2; l2 = l2.__; ) if ((i2 = l2.__c) && !i2.__) try {
+    if ((r2 = i2.constructor) && null != r2.getDerivedStateFromError && (i2.setState(r2.getDerivedStateFromError(n2)), o2 = i2.__d), null != i2.componentDidCatch && (i2.componentDidCatch(n2, t2 || {}), o2 = i2.__d), o2) return i2.__E = i2;
+  } catch (l3) {
+    n2 = l3;
+  }
+  throw n2;
+} }, "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, Math.random().toString(8);
+
+// node_modules/preact/jsx-runtime/dist/jsxRuntime.mjs
+var f2 = 0;
+function u2(e2, t2, n2, o2, i2, u3) {
+  t2 || (t2 = {});
+  var a2, c2, p2 = t2;
+  if ("ref" in p2) for (c2 in p2 = {}, t2) "ref" == c2 ? a2 = t2[c2] : p2[c2] = t2[c2];
+  var l2 = { type: e2, props: p2, key: n2, ref: a2, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: --f2, __i: -1, __u: 0, __source: i2, __self: u3 };
+  if ("function" == typeof e2 && (a2 = e2.defaultProps)) for (c2 in a2) void 0 === p2[c2] && (p2[c2] = a2[c2]);
+  return l.vnode && l.vnode(l2), l2;
+}
+
+// src/components/CanvasBody.tsx
 function resolveColor(color) {
   if (!color) return void 0;
   if (color.startsWith("#")) return color;
@@ -614,11 +635,11 @@ function renderNode(node, renderedTexts, embeddedContent, slug2) {
   if (color) {
     baseStyle["--canvas-node-color"] = color;
   }
-  const styleStr = Object.entries(baseStyle).map(([k, v]) => `${k}:${v}`).join(";");
+  const styleStr = Object.entries(baseStyle).map(([k, v2]) => `${k}:${v2}`).join(";");
   switch (node.type) {
     case "text": {
       const html = renderedTexts[node.id];
-      return /* @__PURE__ */ jsx("div", { class: "canvas-node canvas-node-text", "data-node-id": node.id, style: styleStr, children: html ? /* @__PURE__ */ jsx("div", { class: "canvas-node-content", dangerouslySetInnerHTML: { __html: html } }) : /* @__PURE__ */ jsx("div", { class: "canvas-node-content", children: node.text }) });
+      return /* @__PURE__ */ u2("div", { class: "canvas-node canvas-node-text", "data-node-id": node.id, style: styleStr, children: html ? /* @__PURE__ */ u2("div", { class: "canvas-node-content", dangerouslySetInnerHTML: { __html: html } }) : /* @__PURE__ */ u2("div", { class: "canvas-node-content", children: node.text }) });
     }
     case "file": {
       const filename = node.file.split("/").pop()?.replace(/\.md$/, "") ?? node.file;
@@ -626,19 +647,19 @@ function renderNode(node, renderedTexts, embeddedContent, slug2) {
       const embedded = embeddedContent[node.id];
       const isImage = /\.(png|jpe?g|gif|svg|webp|avif|bmp|ico)$/i.test(node.file);
       if (isImage) {
-        return /* @__PURE__ */ jsx(
+        return /* @__PURE__ */ u2(
           "div",
           {
             class: "canvas-node canvas-node-file canvas-node-image",
             "data-node-id": node.id,
             style: styleStr,
-            children: /* @__PURE__ */ jsx("img", { src: resolveRelative(slug2, fileSlug), alt: filename, loading: "lazy" })
+            children: /* @__PURE__ */ u2("img", { src: resolveRelative(slug2, fileSlug), alt: filename, loading: "lazy" })
           }
         );
       }
-      return /* @__PURE__ */ jsxs("div", { class: "canvas-node canvas-node-file", "data-node-id": node.id, style: styleStr, children: [
-        /* @__PURE__ */ jsxs("div", { class: "canvas-file-label", children: [
-          /* @__PURE__ */ jsx(
+      return /* @__PURE__ */ u2("div", { class: "canvas-node canvas-node-file", "data-node-id": node.id, style: styleStr, children: [
+        /* @__PURE__ */ u2("div", { class: "canvas-file-label", children: [
+          /* @__PURE__ */ u2(
             "a",
             {
               href: resolveRelative(slug2, fileSlug),
@@ -647,9 +668,9 @@ function renderNode(node, renderedTexts, embeddedContent, slug2) {
               children: filename
             }
           ),
-          node.subpath && /* @__PURE__ */ jsx("span", { class: "canvas-file-subpath", children: node.subpath })
+          node.subpath && /* @__PURE__ */ u2("span", { class: "canvas-file-subpath", children: node.subpath })
         ] }),
-        /* @__PURE__ */ jsx("div", { class: "canvas-node-content", children: embedded ? /* @__PURE__ */ jsx("div", { class: "canvas-embed-content", dangerouslySetInnerHTML: { __html: embedded } }) : /* @__PURE__ */ jsx(
+        /* @__PURE__ */ u2("div", { class: "canvas-node-content", children: embedded ? /* @__PURE__ */ u2("div", { class: "canvas-embed-content", dangerouslySetInnerHTML: { __html: embedded } }) : /* @__PURE__ */ u2(
           "a",
           {
             href: resolveRelative(slug2, fileSlug),
@@ -667,8 +688,8 @@ function renderNode(node, renderedTexts, embeddedContent, slug2) {
       } catch {
         hostname = node.url;
       }
-      return /* @__PURE__ */ jsxs("div", { class: "canvas-node canvas-node-link", "data-node-id": node.id, style: styleStr, children: [
-        /* @__PURE__ */ jsx("div", { class: "canvas-link-label", children: /* @__PURE__ */ jsx(
+      return /* @__PURE__ */ u2("div", { class: "canvas-node canvas-node-link", "data-node-id": node.id, style: styleStr, children: [
+        /* @__PURE__ */ u2("div", { class: "canvas-link-label", children: /* @__PURE__ */ u2(
           "a",
           {
             href: node.url,
@@ -678,8 +699,8 @@ function renderNode(node, renderedTexts, embeddedContent, slug2) {
             children: hostname
           }
         ) }),
-        /* @__PURE__ */ jsxs("div", { class: "canvas-node-content canvas-iframe-wrapper", children: [
-          /* @__PURE__ */ jsx(
+        /* @__PURE__ */ u2("div", { class: "canvas-node-content canvas-iframe-wrapper", children: [
+          /* @__PURE__ */ u2(
             "iframe",
             {
               src: node.url,
@@ -689,7 +710,7 @@ function renderNode(node, renderedTexts, embeddedContent, slug2) {
               referrerpolicy: "no-referrer"
             }
           ),
-          /* @__PURE__ */ jsx("div", { class: "canvas-iframe-fallback", children: /* @__PURE__ */ jsxs("a", { href: node.url, target: "_blank", rel: "noopener noreferrer", children: [
+          /* @__PURE__ */ u2("div", { class: "canvas-iframe-fallback", children: /* @__PURE__ */ u2("a", { href: node.url, target: "_blank", rel: "noopener noreferrer", children: [
             "Open ",
             hostname,
             " in new tab"
@@ -698,7 +719,7 @@ function renderNode(node, renderedTexts, embeddedContent, slug2) {
       ] });
     }
     case "group":
-      return /* @__PURE__ */ jsx("div", { class: "canvas-node canvas-node-group", "data-node-id": node.id, style: styleStr, children: node.label && /* @__PURE__ */ jsx("div", { class: "canvas-group-label", children: node.label }) });
+      return /* @__PURE__ */ u2("div", { class: "canvas-node canvas-node-group", "data-node-id": node.id, style: styleStr, children: node.label && /* @__PURE__ */ u2("div", { class: "canvas-group-label", children: node.label }) });
     default:
       return null;
   }
@@ -719,9 +740,9 @@ function renderEdge(edge, nodeMap) {
   const midX = from.x + dx / 2;
   const midY = from.y + dy / 2;
   const pathD = `M ${from.x} ${from.y} Q ${midX} ${from.y}, ${midX} ${midY} T ${to.x} ${to.y}`;
-  return /* @__PURE__ */ jsxs("g", { class: "canvas-edge", "data-edge-id": edge.id, children: [
-    /* @__PURE__ */ jsxs("defs", { children: [
-      hasToArrow && /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ u2("g", { class: "canvas-edge", "data-edge-id": edge.id, children: [
+    /* @__PURE__ */ u2("defs", { children: [
+      hasToArrow && /* @__PURE__ */ u2(
         "marker",
         {
           id: markerId,
@@ -731,10 +752,10 @@ function renderEdge(edge, nodeMap) {
           markerWidth: "6",
           markerHeight: "6",
           orient: "auto-start-reverse",
-          children: /* @__PURE__ */ jsx("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: color ?? "var(--darkgray)" })
+          children: /* @__PURE__ */ u2("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: color ?? "var(--darkgray)" })
         }
       ),
-      hasFromArrow && /* @__PURE__ */ jsx(
+      hasFromArrow && /* @__PURE__ */ u2(
         "marker",
         {
           id: markerStartId,
@@ -744,11 +765,11 @@ function renderEdge(edge, nodeMap) {
           markerWidth: "6",
           markerHeight: "6",
           orient: "auto-start-reverse",
-          children: /* @__PURE__ */ jsx("path", { d: "M 10 0 L 0 5 L 10 10 z", fill: color ?? "var(--darkgray)" })
+          children: /* @__PURE__ */ u2("path", { d: "M 10 0 L 0 5 L 10 10 z", fill: color ?? "var(--darkgray)" })
         }
       )
     ] }),
-    /* @__PURE__ */ jsx(
+    /* @__PURE__ */ u2(
       "path",
       {
         d: pathD,
@@ -759,8 +780,8 @@ function renderEdge(edge, nodeMap) {
         "marker-start": hasFromArrow ? `url(#${markerStartId})` : void 0
       }
     ),
-    edge.label && /* @__PURE__ */ jsxs("g", { class: "canvas-edge-label-group", children: [
-      /* @__PURE__ */ jsx(
+    edge.label && /* @__PURE__ */ u2("g", { class: "canvas-edge-label-group", children: [
+      /* @__PURE__ */ u2(
         "rect",
         {
           x: midX - edge.label.length * 3.5 - 4,
@@ -771,7 +792,7 @@ function renderEdge(edge, nodeMap) {
           class: "canvas-edge-label-bg"
         }
       ),
-      /* @__PURE__ */ jsx("text", { x: midX, y: midY, class: "canvas-edge-label", "text-anchor": "middle", dy: "-8", children: edge.label })
+      /* @__PURE__ */ u2("text", { x: midX, y: midY, class: "canvas-edge-label", "text-anchor": "middle", dy: "-8", children: edge.label })
     ] })
   ] });
 }
@@ -781,7 +802,7 @@ var CanvasBody_default = ((userOpts) => {
     const slug2 = props.fileData.slug ?? "";
     const canvasData = fileData.canvasData;
     if (!canvasData) {
-      return /* @__PURE__ */ jsx("article", { class: "canvas-page popover-hint", children: /* @__PURE__ */ jsx("p", { children: "No canvas data found." }) });
+      return /* @__PURE__ */ u2("article", { class: "canvas-page popover-hint", children: /* @__PURE__ */ u2("p", { children: "No canvas data found." }) });
     }
     const nodes = canvasData.nodes ?? [];
     const edges = canvasData.edges ?? [];
@@ -810,7 +831,7 @@ var CanvasBody_default = ((userOpts) => {
     const initialZoom = opts.initialZoom ?? 1;
     const minZoom = opts.minZoom ?? 0.1;
     const maxZoom = opts.maxZoom ?? 5;
-    return /* @__PURE__ */ jsx("article", { class: "canvas-page popover-hint", children: /* @__PURE__ */ jsxs(
+    return /* @__PURE__ */ u2("article", { class: "canvas-page popover-hint", children: /* @__PURE__ */ u2(
       "div",
       {
         class: "canvas-container",
@@ -819,9 +840,9 @@ var CanvasBody_default = ((userOpts) => {
         "data-min-zoom": minZoom.toString(),
         "data-max-zoom": maxZoom.toString(),
         children: [
-          /* @__PURE__ */ jsxs("div", { class: "canvas-controls", children: [
-            /* @__PURE__ */ jsxs("div", { class: "canvas-zoom-group", children: [
-              /* @__PURE__ */ jsx("button", { class: "canvas-zoom-in", type: "button", "aria-label": "Zoom in", children: /* @__PURE__ */ jsxs(
+          /* @__PURE__ */ u2("div", { class: "canvas-controls", children: [
+            /* @__PURE__ */ u2("div", { class: "canvas-zoom-group", children: [
+              /* @__PURE__ */ u2("button", { class: "canvas-zoom-in", type: "button", "aria-label": "Zoom in", children: /* @__PURE__ */ u2(
                 "svg",
                 {
                   xmlns: "http://www.w3.org/2000/svg",
@@ -834,14 +855,14 @@ var CanvasBody_default = ((userOpts) => {
                   "stroke-linecap": "round",
                   "stroke-linejoin": "round",
                   children: [
-                    /* @__PURE__ */ jsx("circle", { cx: "11", cy: "11", r: "8" }),
-                    /* @__PURE__ */ jsx("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" }),
-                    /* @__PURE__ */ jsx("line", { x1: "11", y1: "8", x2: "11", y2: "14" }),
-                    /* @__PURE__ */ jsx("line", { x1: "8", y1: "11", x2: "14", y2: "11" })
+                    /* @__PURE__ */ u2("circle", { cx: "11", cy: "11", r: "8" }),
+                    /* @__PURE__ */ u2("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" }),
+                    /* @__PURE__ */ u2("line", { x1: "11", y1: "8", x2: "11", y2: "14" }),
+                    /* @__PURE__ */ u2("line", { x1: "8", y1: "11", x2: "14", y2: "11" })
                   ]
                 }
               ) }),
-              /* @__PURE__ */ jsx("button", { class: "canvas-zoom-out", type: "button", "aria-label": "Zoom out", children: /* @__PURE__ */ jsxs(
+              /* @__PURE__ */ u2("button", { class: "canvas-zoom-out", type: "button", "aria-label": "Zoom out", children: /* @__PURE__ */ u2(
                 "svg",
                 {
                   xmlns: "http://www.w3.org/2000/svg",
@@ -854,21 +875,21 @@ var CanvasBody_default = ((userOpts) => {
                   "stroke-linecap": "round",
                   "stroke-linejoin": "round",
                   children: [
-                    /* @__PURE__ */ jsx("circle", { cx: "11", cy: "11", r: "8" }),
-                    /* @__PURE__ */ jsx("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" }),
-                    /* @__PURE__ */ jsx("line", { x1: "8", y1: "11", x2: "14", y2: "11" })
+                    /* @__PURE__ */ u2("circle", { cx: "11", cy: "11", r: "8" }),
+                    /* @__PURE__ */ u2("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" }),
+                    /* @__PURE__ */ u2("line", { x1: "8", y1: "11", x2: "14", y2: "11" })
                   ]
                 }
               ) })
             ] }),
-            /* @__PURE__ */ jsx(
+            /* @__PURE__ */ u2(
               "button",
               {
                 class: "canvas-reset-view",
                 type: "button",
                 "aria-label": "Reset view",
                 style: "display:none",
-                children: /* @__PURE__ */ jsxs(
+                children: /* @__PURE__ */ u2(
                   "svg",
                   {
                     xmlns: "http://www.w3.org/2000/svg",
@@ -881,15 +902,15 @@ var CanvasBody_default = ((userOpts) => {
                     "stroke-linecap": "round",
                     "stroke-linejoin": "round",
                     children: [
-                      /* @__PURE__ */ jsx("path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" }),
-                      /* @__PURE__ */ jsx("path", { d: "M3 3v5h5" })
+                      /* @__PURE__ */ u2("path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" }),
+                      /* @__PURE__ */ u2("path", { d: "M3 3v5h5" })
                     ]
                   }
                 )
               }
             ),
-            /* @__PURE__ */ jsxs("button", { class: "canvas-fullscreen-toggle", type: "button", "aria-label": "Toggle fullscreen", children: [
-              /* @__PURE__ */ jsxs(
+            /* @__PURE__ */ u2("button", { class: "canvas-fullscreen-toggle", type: "button", "aria-label": "Toggle fullscreen", children: [
+              /* @__PURE__ */ u2(
                 "svg",
                 {
                   xmlns: "http://www.w3.org/2000/svg",
@@ -903,14 +924,14 @@ var CanvasBody_default = ((userOpts) => {
                   "stroke-linejoin": "round",
                   class: "canvas-fullscreen-enter",
                   children: [
-                    /* @__PURE__ */ jsx("path", { d: "M8 3H5a2 2 0 0 0-2 2v3" }),
-                    /* @__PURE__ */ jsx("path", { d: "M21 8V5a2 2 0 0 0-2-2h-3" }),
-                    /* @__PURE__ */ jsx("path", { d: "M3 16v3a2 2 0 0 0 2 2h3" }),
-                    /* @__PURE__ */ jsx("path", { d: "M16 21h3a2 2 0 0 0 2-2v-3" })
+                    /* @__PURE__ */ u2("path", { d: "M8 3H5a2 2 0 0 0-2 2v3" }),
+                    /* @__PURE__ */ u2("path", { d: "M21 8V5a2 2 0 0 0-2-2h-3" }),
+                    /* @__PURE__ */ u2("path", { d: "M3 16v3a2 2 0 0 0 2 2h3" }),
+                    /* @__PURE__ */ u2("path", { d: "M16 21h3a2 2 0 0 0 2-2v-3" })
                   ]
                 }
               ),
-              /* @__PURE__ */ jsxs(
+              /* @__PURE__ */ u2(
                 "svg",
                 {
                   xmlns: "http://www.w3.org/2000/svg",
@@ -925,17 +946,17 @@ var CanvasBody_default = ((userOpts) => {
                   class: "canvas-fullscreen-exit",
                   style: "display:none",
                   children: [
-                    /* @__PURE__ */ jsx("path", { d: "M8 3v3a2 2 0 0 1-2 2H3" }),
-                    /* @__PURE__ */ jsx("path", { d: "M21 8h-3a2 2 0 0 1-2-2V3" }),
-                    /* @__PURE__ */ jsx("path", { d: "M3 16h3a2 2 0 0 1 2 2v3" }),
-                    /* @__PURE__ */ jsx("path", { d: "M16 21v-3a2 2 0 0 1 2-2h3" })
+                    /* @__PURE__ */ u2("path", { d: "M8 3v3a2 2 0 0 1-2 2H3" }),
+                    /* @__PURE__ */ u2("path", { d: "M21 8h-3a2 2 0 0 1-2-2V3" }),
+                    /* @__PURE__ */ u2("path", { d: "M3 16h3a2 2 0 0 1 2 2v3" }),
+                    /* @__PURE__ */ u2("path", { d: "M16 21v-3a2 2 0 0 1 2-2h3" })
                   ]
                 }
               )
             ] })
           ] }),
-          /* @__PURE__ */ jsxs("div", { class: "canvas-viewport", style: `width:${viewWidth}px;height:${viewHeight}px`, children: [
-            /* @__PURE__ */ jsx(
+          /* @__PURE__ */ u2("div", { class: "canvas-viewport", style: `width:${viewWidth}px;height:${viewHeight}px`, children: [
+            /* @__PURE__ */ u2(
               "div",
               {
                 class: "canvas-nodes",
@@ -943,7 +964,7 @@ var CanvasBody_default = ((userOpts) => {
                 children: nodes.map((node) => renderNode(node, renderedTexts, embeddedContent, slug2))
               }
             ),
-            /* @__PURE__ */ jsx(
+            /* @__PURE__ */ u2(
               "svg",
               {
                 class: "canvas-edges",
