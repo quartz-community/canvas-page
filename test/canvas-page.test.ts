@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { createCtx } from "./helpers";
-import { CanvasPage } from "../src/pageType";
+import { CanvasPage, renderCanvasText } from "../src/pageType";
 import type { CanvasData } from "../src/types";
 import type {
   ProcessedContent,
@@ -10,6 +10,7 @@ import type {
 } from "@quartz-community/types";
 import type { Root as HastRoot } from "hast";
 import { resolveEmbeddedHtml } from "../src/components/CanvasBody";
+import { slugifyFilePath } from "@quartz-community/utils/path";
 
 const sampleCanvas: CanvasData = {
   nodes: [
@@ -382,5 +383,41 @@ describe("CanvasPage", () => {
       );
       expect(embedded).toBeUndefined();
     });
+  });
+});
+
+describe("renderCanvasText link resolution", () => {
+  const allSlugs = ["index.md", "Note.md", "sub/Other Note.md", "board.canvas"].map((fp) =>
+    slugifyFilePath(fp as FilePath),
+  );
+  const render = (text: string, slug = "board.canvas") =>
+    renderCanvasText(text, slug as FullSlug, allSlugs);
+
+  it("resolves markdown links to .md files against site slugs", () => {
+    const html = render("[Note](Note.md) and [Other](sub/Other%20Note.md)");
+    expect(html).toContain('href="./note"');
+    expect(html).toContain('href="./sub/other-note"');
+    expect(html).not.toContain(".md");
+  });
+
+  it("resolves by shortest path and relative to nested canvas pages", () => {
+    const html = render("[x](Other%20Note.md)", "deep/dir/board.canvas");
+    expect(html).toContain('href="../../sub/other-note"');
+  });
+
+  it("turns wikilinks into links, with aliases and headings", () => {
+    const html = render("[[Note]] [[Other Note|shown]] [[Note#My Heading]]");
+    expect(html).toContain('<a href="./note" class="internal internal-link">Note</a>');
+    expect(html).toContain('<a href="./sub/other-note" class="internal internal-link">shown</a>');
+    expect(html).toContain(
+      'href="./note#my-heading" class="internal internal-link">Note &gt; My Heading</a>',
+    );
+  });
+
+  it("leaves external links, anchors and embeds untouched", () => {
+    const html = render("[ext](https://example.com) [a](#top) ![[image.png]]");
+    expect(html).toContain('<a href="https://example.com">ext</a>');
+    expect(html).toContain('<a href="#top">a</a>');
+    expect(html).toContain("![[image.png]]");
   });
 });
