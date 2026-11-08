@@ -50,7 +50,7 @@ describe("CanvasPage", () => {
     expect(plugin.fileExtensions).toEqual([".canvas"]);
   });
 
-  it("generates virtual pages from .canvas files", () => {
+  it("generates virtual pages from .canvas files", async () => {
     const ctx = createCtx({
       allFiles: ["notes/project.canvas" as FilePath, "readme.md" as FilePath],
     });
@@ -58,7 +58,7 @@ describe("CanvasPage", () => {
     const content: ProcessedContent[] = [];
     const cfg = ctx.cfg.configuration;
 
-    const pages = plugin.generate!({ content, cfg, ctx });
+    const pages = await plugin.generate!({ content, cfg, ctx });
 
     expect(pages).toHaveLength(1);
     expect(pages[0]!.slug).toBe("notes/project.canvas");
@@ -66,7 +66,7 @@ describe("CanvasPage", () => {
     expect(pages[0]!.data).toHaveProperty("canvasData");
   });
 
-  it("keeps the .canvas extension in virtual page slugs", () => {
+  it("keeps the .canvas extension in virtual page slugs", async () => {
     const ctx = createCtx({
       allFiles: ["maps/Team Board.canvas" as FilePath],
     });
@@ -74,14 +74,14 @@ describe("CanvasPage", () => {
     const content: ProcessedContent[] = [];
     const cfg = ctx.cfg.configuration;
 
-    const pages = plugin.generate!({ content, cfg, ctx });
+    const pages = await plugin.generate!({ content, cfg, ctx });
 
     expect(pages).toHaveLength(1);
     expect(pages[0]!.slug).toBe("maps/team-board.canvas");
     expect(pages[0]!.slug.endsWith(".canvas")).toBe(true);
   });
 
-  it("normalizes spaces to hyphens and lowercases canvas slugs", () => {
+  it("normalizes spaces to hyphens and lowercases canvas slugs", async () => {
     const ctx = createCtx({
       allFiles: ["Study Notes/Concept Civic Board.canvas" as FilePath],
     });
@@ -89,7 +89,7 @@ describe("CanvasPage", () => {
     const content: ProcessedContent[] = [];
     const cfg = ctx.cfg.configuration;
 
-    const pages = plugin.generate!({ content, cfg, ctx });
+    const pages = await plugin.generate!({ content, cfg, ctx });
 
     expect(pages).toHaveLength(1);
     expect(pages[0]!.slug).toBe("study-notes/concept-civic-board.canvas");
