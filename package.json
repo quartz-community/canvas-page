@@ -1,6 +1,6 @@
 {
   "name": "@quartz-community/canvas-page",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JSON Canvas (Obsidian .canvas) page type plugin for Quartz v5. Renders interactive canvas visualizations with nodes and edges.",
   "type": "module",
   "license": "MIT",
