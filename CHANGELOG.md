@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- abf5c4a: Canvas pages now carry the path of their `.canvas` file (`filePath` / `relativePath`) instead of a made-up `<name>.canvas.md`. Base views (bases-page) list canvas files with `file.path`, `file.ext` (`canvas`), `file.folder` and `file.inFolder()` as Obsidian does, the content index records the real file path, and canvas pages get their generated social image.
+- 283c325: Bundles `@quartz-community/utils` 1.1.0: a short wikilink to an Obsidian folder note (`[[Topic]]` for `Topic/Topic.md`) reaches the folder page, and anchors to headings use the same slug as heading ids. `github-slugger` is no longer a dependency of this plugin.
+
 ## 1.0.1
 
 ### Patch Changes
