@@ -1,10 +1,16 @@
 import type {
   QuartzPageTypePlugin,
   PageMatcher,
+  FilePath,
   FullSlug,
   VirtualPage,
 } from "@quartz-community/types";
-import { isAbsoluteURL, slugifyFilePath, transformLink } from "@quartz-community/utils/path";
+import {
+  isAbsoluteURL,
+  joinSegments,
+  slugifyFilePath,
+  transformLink,
+} from "@quartz-community/utils/path";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { micromark } from "micromark";
@@ -113,6 +119,11 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
         slug,
         title: baseName,
         data: {
+          // The page stands for the .canvas file: give it the source paths Quartz's parser
+          // sets on notes (instead of the synthetic `<slug>.md`), so bases list it with
+          // file.ext "canvas", and folder listings and the content index see its real path.
+          filePath: joinSegments(ctx.argv.directory, filePath) as FilePath,
+          relativePath: filePath,
           frontmatter: { title: baseName, tags: [] },
           canvasData: processedData,
           canvasOptions: opts,
