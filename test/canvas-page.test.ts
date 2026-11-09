@@ -66,6 +66,19 @@ describe("CanvasPage", () => {
     expect(pages[0]!.data).toHaveProperty("canvasData");
   });
 
+  it("gives virtual pages the .canvas file's source paths", async () => {
+    const ctx = createCtx({
+      allFiles: ["maps/Team Board.canvas" as FilePath, "Root.canvas" as FilePath],
+    });
+
+    const pages = await plugin.generate!({ content: [], cfg: ctx.cfg.configuration, ctx });
+
+    expect(pages.map((p) => [p.data.filePath, p.data.relativePath])).toEqual([
+      ["content/maps/Team Board.canvas", "maps/Team Board.canvas"],
+      ["content/Root.canvas", "Root.canvas"],
+    ]);
+  });
+
   it("keeps the .canvas extension in virtual page slugs", async () => {
     const ctx = createCtx({
       allFiles: ["maps/Team Board.canvas" as FilePath],
