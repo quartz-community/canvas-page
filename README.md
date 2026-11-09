@@ -5,14 +5,16 @@ A page type plugin that renders [JSON Canvas](https://jsoncanvas.org) (`.canvas`
 ## Installation
 
 ```bash
-npx quartz plugin add github:quartz-community/canvas-page
+npx quartz plugin add @quartz-community/canvas-page
 ```
+
+It is already included (and enabled) in the default `quartz.config.yaml`.
 
 ## Usage
 
 ```yaml title="quartz.config.yaml"
 plugins:
-  - source: github:quartz-community/canvas-page
+  - source: "@quartz-community/canvas-page"
     enabled: true
 ```
 
@@ -23,7 +25,7 @@ import * as ExternalPlugin from "./.quartz/plugins";
 
 ExternalPlugin.CanvasPage({
   enableInteraction: true,
-  defaultFullscreen: false,
+  initialZoom: 1,
 });
 ```
 
@@ -34,7 +36,7 @@ ExternalPlugin.CanvasPage({
 - **Link nodes**: Reference external URLs.
 - **Group nodes**: Visual grouping containers with optional labels and background colors.
 - **Edges**: SVG connections between nodes with optional labels, arrow markers, and colors. Supports all four sides and both preset colors (1–6) and custom hex colors.
-- **Fullscreen mode**: Toggle button to expand the canvas to fill the viewport. Configurable default via `defaultFullscreen`.
+- **Canvas frame**: Canvas pages use the plugin's own fullscreen `canvas` page frame with a togglable left sidebar (set `layout.byPageType.canvas.template: default` for the standard three-column layout). Embedded canvases get a fullscreen toggle button instead.
 - **Preset colors**: Six preset colors (red, orange, yellow, green, cyan, purple) plus custom hex colors for nodes and edges.
 
 ## Configuration
@@ -45,7 +47,6 @@ ExternalPlugin.CanvasPage({
 | `initialZoom`       | `number`  | `1`     | The initial zoom level when the canvas is first displayed. |
 | `minZoom`           | `number`  | `0.1`   | The minimum zoom level allowed when zooming out.           |
 | `maxZoom`           | `number`  | `5`     | The maximum zoom level allowed when zooming in.            |
-| `defaultFullscreen` | `boolean` | `false` | Whether canvas pages default to fullscreen mode.           |
 
 ## Documentation
 
