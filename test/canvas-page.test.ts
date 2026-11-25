@@ -272,6 +272,43 @@ describe("CanvasPage", () => {
       expect(embedded).not.toContain("Details content");
     });
 
+    it("extracts a header section inside Obsidian's block wrappers", () => {
+      const wrap = (tagName: string, id: string | undefined, value: string) => ({
+        type: "element" as const,
+        tagName: "div",
+        properties: { className: [`el-${tagName}`] },
+        children: [
+          {
+            type: "element" as const,
+            tagName,
+            properties: id ? { id } : {},
+            children: [{ type: "text" as const, value }],
+          },
+        ],
+      });
+      const htmlAst: HastRoot = {
+        type: "root",
+        children: [
+          wrap("h2", "intro", "Intro"),
+          wrap("p", undefined, "Intro content"),
+          wrap("h2", "details", "Details"),
+          wrap("p", undefined, "Details content"),
+        ],
+      };
+      const allFiles: QuartzPluginData[] = [
+        { slug: "doc" as FullSlug, htmlAst } as unknown as QuartzPluginData,
+      ];
+
+      const embedded = resolveEmbeddedHtml(
+        "doc" as FullSlug,
+        "canvas.canvas" as FullSlug,
+        allFiles,
+        "#intro",
+      );
+      expect(embedded).toContain('<div class="el-p"><p>Intro content</p></div>');
+      expect(embedded).not.toContain("Details content");
+    });
+
     it("extracts block via #^blockid subpath", () => {
       const htmlAst: HastRoot = { type: "root", children: [] };
       const blocks: Record<string, import("hast").Element> = {

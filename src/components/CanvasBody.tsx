@@ -46,6 +46,20 @@ function getEdgeAnchor(node: CanvasNode, side: string | undefined): { x: number;
 
 const headerRegex = /^h[1-6]$/;
 
+/**
+ * The block inside Obsidian's per-block wrapper (`div.el-h2 > h2`), which
+ * `@quartz-community/rehype-obsidian` renders around each of a note's top-level
+ * blocks; any other node is its own block.
+ */
+function blockOf(node: HastRoot["children"][number]): HastRoot["children"][number] {
+  if (node.type !== "element" || (node as HastElement).tagName !== "div") return node;
+  const el = node as HastElement;
+  const classes = ([] as unknown[]).concat(el.properties?.className ?? []);
+  if (!classes.some((c) => /^el-[a-z0-9]+$/.test(String(c)))) return node;
+  const inner = el.children.filter((c) => c.type === "element");
+  return inner.length === 1 ? inner[0]! : node;
+}
+
 function findPage(fileSlug: FullSlug, allFiles: QuartzPluginData[]): QuartzPluginData | undefined {
   let page = allFiles.find((f) => f.slug === fileSlug);
   if (!page) {
@@ -107,7 +121,9 @@ function applySubpath(
   let startIdx: number | undefined;
   let startDepth: number | undefined;
   let endIdx: number | undefined;
-  for (const [i, el] of htmlAst.children.entries()) {
+  for (const [i, child] of htmlAst.children.entries()) {
+    // The heading, inside its block wrapper if it has one.
+    const el = blockOf(child);
     if (el.type !== "element" || !headerRegex.test((el as HastElement).tagName)) continue;
     const depth = Number((el as HastElement).tagName.substring(1));
     if (startIdx === undefined || startDepth === undefined) {
