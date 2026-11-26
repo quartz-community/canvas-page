@@ -120,6 +120,12 @@ export interface CanvasPageOptions {
   /** Maximum zoom level. Default: 5 */
   maxZoom?: number;
   /**
+   * How text nodes' Markdown is rendered. `"site"` (default): with the site's own Markdown
+   * plugins, like a note (wikilinks, callouts, Mermaid diagrams, math, highlighting, …), as in
+   * Obsidian. `"basic"`: plain CommonMark + GFM, with wikilinks and links to notes resolved.
+   */
+  textNodeMarkdown?: "site" | "basic";
+  /**
    * What a plain mouse wheel / two-finger trackpad scroll does. `"pan"` (default) moves the
    * canvas, as in Obsidian; Ctrl/Cmd + wheel and pinching zoom. `"zoom"` makes the plain wheel
    * zoom as well (the behaviour before 1.1).

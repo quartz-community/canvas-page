@@ -31,7 +31,7 @@ ExternalPlugin.CanvasPage({
 
 ## Features
 
-- **Text nodes**: Render Markdown content including headings, bold, italic, strikethrough, lists, links, and code blocks via GFM support.
+- **Text nodes**: Rendered with the site's own Markdown plugins, like a note (as in Obsidian): wikilinks, callouts, Mermaid diagrams (Pele or Mermaid.js, as configured in ObsidianFlavoredMarkdown), math, syntax highlighting. Set `textNodeMarkdown: basic` for plain CommonMark + GFM. Embedded notes (`![[Note]]`) inside text nodes are not filled in, and tags in text nodes get no tag page of their own.
 - **File nodes**: Link to other pages in your vault with popover previews on hover.
 - **Link nodes**: Reference external URLs.
 - **Group nodes**: Visual grouping containers with optional labels and background colors.
@@ -41,13 +41,14 @@ ExternalPlugin.CanvasPage({
 
 ## Configuration
 
-| Option              | Type              | Default | Description                                                                                                                                                                            |
-| ------------------- | ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enableInteraction` | `boolean`         | `true`  | Whether to enable pan and zoom interaction on the canvas.                                                                                                                              |
-| `initialZoom`       | `number`          | `1`     | The initial zoom level when the canvas is first displayed.                                                                                                                             |
-| `minZoom`           | `number`          | `0.1`   | The minimum zoom level allowed when zooming out.                                                                                                                                       |
-| `maxZoom`           | `number`          | `5`     | The maximum zoom level allowed when zooming in.                                                                                                                                        |
-| `wheelBehavior`     | `"pan" \| "zoom"` | `"pan"` | What the mouse wheel / two-finger scroll does. `"pan"` moves the canvas like Obsidian (Shift + wheel: sideways); Ctrl/Cmd + wheel and pinching zoom. `"zoom"`: the wheel always zooms. |
+| Option              | Type                | Default  | Description                                                                                                                                                                            |
+| ------------------- | ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enableInteraction` | `boolean`           | `true`   | Whether to enable pan and zoom interaction on the canvas.                                                                                                                              |
+| `initialZoom`       | `number`            | `1`      | The initial zoom level when the canvas is first displayed.                                                                                                                             |
+| `minZoom`           | `number`            | `0.1`    | The minimum zoom level allowed when zooming out.                                                                                                                                       |
+| `maxZoom`           | `number`            | `5`      | The maximum zoom level allowed when zooming in.                                                                                                                                        |
+| `wheelBehavior`     | `"pan" \| "zoom"`   | `"pan"`  | What the mouse wheel / two-finger scroll does. `"pan"` moves the canvas like Obsidian (Shift + wheel: sideways); Ctrl/Cmd + wheel and pinching zoom. `"zoom"`: the wheel always zooms. |
+| `textNodeMarkdown`  | `"site" \| "basic"` | `"site"` | How text nodes are rendered: with the site's Markdown plugins, or plain CommonMark + GFM (wikilinks and links to notes still resolved).                                                |
 
 ## Documentation
 

@@ -86,10 +86,13 @@
     "micromark-extension-gfm": "^3.0.0",
     "preact": "^10.28.2",
     "prettier": "^3.6.2",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
     "sass": "^1.97.3",
     "sass-embedded": "^1.97.3",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
+    "unified": "^11.0.5",
     "vfile": "^6.0.3",
     "vitest": "^2.1.9",
     "@changesets/cli": "^2.29.2"
@@ -102,7 +105,7 @@
       "component"
     ],
     "version": "1.0.0",
-    "quartzVersion": ">=5.0.0",
+    "quartzVersion": ">=5.1.0",
     "dependencies": [],
     "defaultOrder": 50,
     "defaultEnabled": true,
@@ -111,6 +114,7 @@
       "initialZoom": 1,
       "minZoom": 0.1,
       "maxZoom": 5,
+      "textNodeMarkdown": "site",
       "wheelBehavior": "pan"
     },
     "frames": {
@@ -130,6 +134,13 @@
       },
       "maxZoom": {
         "type": "number"
+      },
+      "textNodeMarkdown": {
+        "type": "string",
+        "enum": [
+          "site",
+          "basic"
+        ]
       },
       "wheelBehavior": {
         "type": "string",
