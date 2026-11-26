@@ -335,6 +335,41 @@ describe("CanvasPage", () => {
       expect(embedded).toContain("Block content here");
     });
 
+    it("finds a block by its ^id written in any case (Obsidian stores it as written)", () => {
+      const blocks: Record<string, import("hast").Element> = {
+        "para-1": {
+          type: "element",
+          tagName: "p",
+          properties: { id: "^para-1" },
+          children: [{ type: "text", value: "The block" }],
+        },
+      };
+      const htmlAst: HastRoot = {
+        type: "root",
+        children: [
+          {
+            type: "element",
+            tagName: "h2",
+            properties: { id: "para-1" },
+            children: [{ type: "text", value: "Para 1" }],
+          },
+          blocks["para-1"]!,
+        ],
+      };
+      const allFiles: QuartzPluginData[] = [
+        { slug: "doc" as FullSlug, htmlAst, blocks } as unknown as QuartzPluginData,
+      ];
+      const embedded = resolveEmbeddedHtml(
+        "doc" as FullSlug,
+        "canvas.canvas" as FullSlug,
+        allFiles,
+        "#^Para-1",
+      );
+      expect(embedded).toContain("The block");
+      expect(embedded).not.toContain("Para 1");
+      expect(embedded).toContain('id="^para-1"');
+    });
+
     it("filters bases view via #view-name subpath", () => {
       const htmlAst: HastRoot = {
         type: "root",

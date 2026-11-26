@@ -75,7 +75,8 @@ function applySubpath(
   isBasePage: boolean,
 ): HastRoot | undefined {
   if (subpath.startsWith("#^")) {
-    const blockId = subpath.slice(2);
+    // `page.blocks` is keyed by the block's name, lowercased; Obsidian stores it as written
+    const blockId = subpath.slice(2).toLowerCase();
     const blocks = (page as Record<string, unknown>).blocks as
       Record<string, HastElement> | undefined;
     const blockNode = blocks?.[blockId];
