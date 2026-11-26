@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+### Patch Changes
+
+- b70b684: Bundles `@quartz-community/utils` 1.3, so `configuration.slugs.stripDiacritics` (Quartz 5.3) also applies to file nodes' links and links in text nodes. Before, the plugin bundled an older utils that ignored the option, and its slugs kept their diacritics.
+
 ## 1.1.0
 
 ### Minor Changes
