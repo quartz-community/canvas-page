@@ -1,3 +1,5 @@
+import type { Root as HastRoot } from "hast";
+
 export type {
   BuildCtx,
   FullSlug,
@@ -142,3 +144,14 @@ export const CANVAS_PRESET_COLORS: Record<string, string> = {
   "5": "#53dfdd",
   "6": "#a882ff",
 };
+
+/**
+ * The rendered Markdown of a canvas's text nodes, by node id (stored with the canvas data on the
+ * page). `renderedTrees`: rendered with the site's Markdown plugins (`textNodeMarkdown: "site"`),
+ * as a HTML tree; its embeds are filled when the page is rendered. `renderedTexts`: HTML from
+ * the basic renderer (`"basic"`, or when the site's plugins failed on the node).
+ */
+export interface CanvasRenderedTexts {
+  renderedTrees?: Record<string, HastRoot>;
+  renderedTexts?: Record<string, string>;
+}

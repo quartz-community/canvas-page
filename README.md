@@ -31,7 +31,7 @@ ExternalPlugin.CanvasPage({
 
 ## Features
 
-- **Text nodes**: Rendered with the site's own Markdown plugins, like a note (as in Obsidian): wikilinks, callouts, Mermaid diagrams (Pele or Mermaid.js, as configured in ObsidianFlavoredMarkdown), math, syntax highlighting. Set `textNodeMarkdown: basic` for plain CommonMark + GFM. Embedded notes (`![[Note]]`) inside text nodes are not filled in, and tags in text nodes get no tag page of their own.
+- **Text nodes**: Rendered with the site's own Markdown plugins, like a note (as in Obsidian): wikilinks, callouts, Mermaid diagrams (Pele or Mermaid.js, as configured in ObsidianFlavoredMarkdown), math, syntax highlighting. Set `textNodeMarkdown: basic` for plain CommonMark + GFM. Embeds (`![[Note]]`, `![[Note#Heading]]`) are filled in as on a note, and tags in text nodes are the canvas page's tags (tag pages list it; tag-page 1.0.7+ builds pages for tags only canvases use). Each node's ids (headings, footnotes) get a prefix of their own, so nodes don't share ids.
 - **File nodes**: Link to other pages in your vault with popover previews on hover.
 - **Link nodes**: Reference external URLs.
 - **Group nodes**: Visual grouping containers with optional labels and background colors.

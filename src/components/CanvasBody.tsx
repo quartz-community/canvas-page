@@ -12,9 +12,24 @@ import {
   normalizeHastElement,
 } from "@quartz-community/utils/path";
 import { toHtml } from "hast-util-to-html";
-import type { Element as HastElement, Root as HastRoot } from "hast";
-import type { CanvasData, CanvasNode, CanvasEdge, CanvasPageOptions } from "../types";
+import type { Element as HastElement, ElementContent, Root as HastRoot } from "hast";
+import type {
+  CanvasData,
+  CanvasNode,
+  CanvasEdge,
+  CanvasPageOptions,
+  CanvasRenderedTexts,
+} from "../types";
 import { CANVAS_PRESET_COLORS } from "../types";
+import {
+  createIdScopes,
+  findHeadingSection,
+  findPage,
+  removeEmptyParagraphs,
+  renderTranscludes,
+  scopeIds,
+  sliceWithFootnotes,
+} from "./transclude";
 import style from "./styles/canvas.scss";
 // @ts-expect-error inline script import handled by bundler
 import script from "./scripts/canvas.inline.ts";
@@ -44,42 +59,13 @@ function getEdgeAnchor(node: CanvasNode, side: string | undefined): { x: number;
   }
 }
 
-const headerRegex = /^h[1-6]$/;
-
-/**
- * The block inside Obsidian's per-block wrapper (`div.el-h2 > h2`), which
- * `@quartz-community/rehype-obsidian` renders around each of a note's top-level
- * blocks; any other node is its own block.
- */
-function blockOf(node: HastRoot["children"][number]): HastRoot["children"][number] {
-  if (node.type !== "element" || (node as HastElement).tagName !== "div") return node;
-  const el = node as HastElement;
-  const classes = ([] as unknown[]).concat(el.properties?.className ?? []);
-  if (!classes.some((c) => /^el-[a-z0-9]+$/.test(String(c)))) return node;
-  const inner = el.children.filter((c) => c.type === "element");
-  return inner.length === 1 ? inner[0]! : node;
-}
-
-function findPage(fileSlug: FullSlug, allFiles: QuartzPluginData[]): QuartzPluginData | undefined {
-  let page = allFiles.find((f) => f.slug === fileSlug);
-  if (!page) {
-    // Virtual pages from pageType plugins have slugs without extensions
-    const dotIdx = fileSlug.lastIndexOf(".");
-    const slashIdx = fileSlug.lastIndexOf("/");
-    if (dotIdx > slashIdx + 1) {
-      const stripped = fileSlug.slice(0, dotIdx) as FullSlug;
-      page = allFiles.find((f) => f.slug === stripped);
-    }
-  }
-  return page;
-}
-
 /**
  * Extract a subset of a HAST tree based on a subpath reference.
  *
  * - `#^blockid`  → block transclude from page.blocks
  * - `#view-name` on a .base page → filter to the named bases view
- * - `#heading`   on other pages  → extract the heading section
+ * - `#heading`   on other pages  → extract the heading section (the heading as Obsidian stores
+ *   it in a file node's `subpath`: its text, e.g. `#Sub Section`, or its id)
  */
 function applySubpath(
   htmlAst: HastRoot,
@@ -116,28 +102,18 @@ function applySubpath(
     return undefined;
   }
 
-  // Header transclude: find the heading whose id matches, take content until
-  // the next heading of equal or lesser depth.
-  let startIdx: number | undefined;
-  let startDepth: number | undefined;
-  let endIdx: number | undefined;
-  for (const [i, child] of htmlAst.children.entries()) {
-    // The heading, inside its block wrapper if it has one.
-    const el = blockOf(child);
-    if (el.type !== "element" || !headerRegex.test((el as HastElement).tagName)) continue;
-    const depth = Number((el as HastElement).tagName.substring(1));
-    if (startIdx === undefined || startDepth === undefined) {
-      if ((el as HastElement).properties?.id === ref) {
-        startIdx = i;
-        startDepth = depth;
-      }
-    } else if (depth <= startDepth) {
-      endIdx = i;
-      break;
-    }
-  }
-  if (startIdx === undefined) return undefined;
-  return { type: "root", children: htmlAst.children.slice(startIdx, endIdx) };
+  // Header transclude: the heading, then the content until the next heading of equal or lesser
+  // depth, and the footnotes it references.
+  const section = findHeadingSection(htmlAst.children, ref);
+  if (!section) return undefined;
+  return {
+    type: "root",
+    children: sliceWithFootnotes(
+      htmlAst.children as ElementContent[],
+      section.start,
+      section.end,
+    ) as HastRoot["children"],
+  };
 }
 
 function findBasesView(el: HastElement, viewName: string): HastElement | undefined {
@@ -154,15 +130,19 @@ function findBasesView(el: HastElement, viewName: string): HastElement | undefin
   return undefined;
 }
 
-export function resolveEmbeddedHtml(
+/**
+ * The content of the page `fileSlug` (or the part `subpath` names), with its links rebased to
+ * the canvas page `canvasSlug`; `undefined` when there is none or it would embed a page in
+ * `visited` (a cycle).
+ */
+export function resolveEmbeddedTree(
   fileSlug: FullSlug,
   canvasSlug: FullSlug,
   allFiles: QuartzPluginData[],
   subpath?: string,
   visited?: Set<string>,
-): string | undefined {
-  const resolvedSlug = fileSlug as string;
-  if (visited?.has(resolvedSlug)) return undefined;
+): { tree: HastRoot; sourceSlug: FullSlug } | undefined {
+  if (visited?.has(fileSlug as string)) return undefined;
 
   const page = findPage(fileSlug, allFiles);
   if (!page) return undefined;
@@ -172,6 +152,7 @@ export function resolveEmbeddedHtml(
 
   const sourceSlug = page.slug as FullSlug | undefined;
   if (!sourceSlug) return undefined;
+  if (visited?.has(sourceSlug as string)) return undefined;
 
   let tree = htmlAst;
   if (subpath) {
@@ -182,24 +163,60 @@ export function resolveEmbeddedHtml(
   }
 
   const rebased: HastRoot = {
-    ...tree,
-    children: tree.children.map((child) =>
+    type: "root",
+    children: (structuredClone(tree.children) as HastRoot["children"]).map((child) =>
       child.type === "element"
         ? (normalizeHastElement(child as HastElement, canvasSlug, sourceSlug) as typeof child)
         : child,
     ),
   };
+  return { tree: rebased, sourceSlug };
+}
 
-  return toHtml(rebased as Parameters<typeof toHtml>[0], { allowDangerousHtml: true });
+export function resolveEmbeddedHtml(
+  fileSlug: FullSlug,
+  canvasSlug: FullSlug,
+  allFiles: QuartzPluginData[],
+  subpath?: string,
+  visited?: Set<string>,
+): string | undefined {
+  const embedded = resolveEmbeddedTree(fileSlug, canvasSlug, allFiles, subpath, visited);
+  if (!embedded) return undefined;
+  return toHtml(embedded.tree as Parameters<typeof toHtml>[0], { allowDangerousHtml: true });
+}
+
+interface NodeRenderContext {
+  slug: FullSlug;
+  allFiles: QuartzPluginData[];
+  visited: Set<string>;
+  locale?: string;
+  /** A prefix per node and per transclusion, unique on the page, for the ids inside it. */
+  scopeFor: (target: string) => string;
+}
+
+/**
+ * A node's content as HTML: its transclusions filled (as Quartz does on a note) and its ids
+ * prefixed, so the ids of different nodes (`# Same` in two text nodes, their footnotes, two
+ * file nodes showing the same note) don't clash and the links inside each node go to its own.
+ */
+function finishNodeContent(
+  tree: HastRoot,
+  nodeId: string,
+  rctx: NodeRenderContext,
+  sourceHref?: string,
+): string {
+  renderTranscludes(tree, rctx);
+  removeEmptyParagraphs(tree);
+  scopeIds(tree, rctx.scopeFor(`node-${nodeId}`), sourceHref);
+  return toHtml(tree as Parameters<typeof toHtml>[0], { allowDangerousHtml: true });
 }
 
 function renderNode(
   node: CanvasNode,
-  renderedTexts: Record<string, string>,
-  slug: FullSlug,
-  allFiles: QuartzPluginData[],
-  visited: Set<string>,
+  rendered: CanvasRenderedTexts,
+  rctx: NodeRenderContext,
 ): unknown {
+  const { slug, allFiles, visited } = rctx;
   const color = resolveColor(node.color);
   const baseStyle: Record<string, string> = {
     left: `${node.x}px`,
@@ -217,7 +234,10 @@ function renderNode(
 
   switch (node.type) {
     case "text": {
-      const html = renderedTexts[node.id];
+      const tree = rendered.renderedTrees?.[node.id];
+      const html = tree
+        ? finishNodeContent(structuredClone(tree), node.id, rctx)
+        : rendered.renderedTexts?.[node.id];
       return (
         <div class="canvas-node canvas-node-text" data-node-id={node.id} style={styleStr}>
           {html ? (
@@ -246,7 +266,14 @@ function renderNode(
         );
       }
 
-      const embedded = resolveEmbeddedHtml(fileSlug, slug, allFiles, node.subpath, visited);
+      const found = resolveEmbeddedTree(fileSlug, slug, allFiles, node.subpath, visited);
+      let embedded: string | undefined;
+      if (found) {
+        // the embedded page's own embeds are filled too; embedding the canvas again is a cycle
+        visited.add(found.sourceSlug);
+        embedded = finishNodeContent(found.tree, node.id, rctx, resolveRelative(slug, fileSlug));
+        visited.delete(found.sourceSlug);
+      }
 
       return (
         <div class="canvas-node canvas-node-file" data-node-id={node.id} style={styleStr}>
@@ -408,8 +435,7 @@ export default ((userOpts?: CanvasPageOptions) => {
   const Component: QuartzComponent = (props: QuartzComponentProps) => {
     const fileData = props.fileData as Record<string, unknown>;
     const slug = (props.fileData.slug ?? "") as FullSlug;
-    const canvasData = fileData.canvasData as
-      (CanvasData & { renderedTexts?: Record<string, string> }) | undefined;
+    const canvasData = fileData.canvasData as (CanvasData & CanvasRenderedTexts) | undefined;
 
     if (!canvasData) {
       return (
@@ -421,9 +447,13 @@ export default ((userOpts?: CanvasPageOptions) => {
 
     const nodes = canvasData.nodes ?? [];
     const edges = canvasData.edges ?? [];
-    const renderedTexts = canvasData.renderedTexts ?? {};
-    const allFiles = props.allFiles;
-    const visited = new Set<string>([slug]);
+    const rctx: NodeRenderContext = {
+      slug,
+      allFiles: props.allFiles,
+      visited: new Set<string>([slug]),
+      locale: (props.cfg as { locale?: string } | undefined)?.locale,
+      scopeFor: createIdScopes(),
+    };
 
     const nodeMap = new Map<string, CanvasNode>();
     for (const node of nodes) {
@@ -568,7 +598,7 @@ export default ((userOpts?: CanvasPageOptions) => {
               class="canvas-nodes"
               style={`transform:translate(${-minX + padding}px,${-minY + padding}px)`}
             >
-              {nodes.map((node) => renderNode(node, renderedTexts, slug, allFiles, visited))}
+              {nodes.map((node) => renderNode(node, canvasData, rctx))}
             </div>
             <svg
               class="canvas-edges"

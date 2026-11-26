@@ -20,12 +20,11 @@ import { gfm, gfmHtml } from "micromark-extension-gfm";
 import { unified, type PluggableList } from "unified";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
-import { toHtml } from "hast-util-to-html";
 import type { Root as MdRoot } from "mdast";
 import type { Root as HastRoot } from "hast";
 import { VFile } from "vfile";
 import CanvasBody from "./components/CanvasBody";
-import type { CanvasData, CanvasPageOptions } from "./types";
+import type { CanvasData, CanvasPageOptions, CanvasRenderedTexts } from "./types";
 
 // [[target]], [[target#heading]], [[target|alias]]; embeds (![[...]]) are left untouched
 const wikilinkRegex = /(!?)\[\[([^[\]\n]+?)\]\]/g;
@@ -79,7 +78,17 @@ export function renderCanvasText(text: string, canvasSlug: FullSlug, allSlugs: F
 export type CanvasTextRenderer = (
   text: string,
   file: { slug: FullSlug; filePath: FilePath; relativePath: FilePath },
-) => Promise<string>;
+  /** The canvas page's title, as the note's frontmatter title. */
+  title?: string,
+) => Promise<RenderedCanvasText>;
+
+/** A text node rendered with the site's Markdown plugins. */
+export interface RenderedCanvasText {
+  /** The node's HTML tree; its embeds are filled when the canvas page is rendered. */
+  tree: HastRoot;
+  /** The tags written in the node (`#tag`), as the site's plugins recorded them. */
+  tags: string[];
+}
 
 /**
  * A renderer that runs text nodes through the site's own Markdown pipeline: every transformer's
@@ -102,34 +111,44 @@ export function createSiteTextRenderer(ctx: BuildCtx): CanvasTextRenderer | unde
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(transformers.flatMap((t) => (t.htmlPlugins?.(ctx) ?? []) as PluggableList));
 
-  return async (text, { slug, filePath, relativePath }) => {
+  return async (text, { slug, filePath, relativePath }, title = "") => {
     let src = text.trim();
     for (const t of transformers) {
       if (t.textTransform) src = t.textTransform(ctx, src);
     }
     // the canvas file stands in for the note: plugins resolve links from its slug, and
     // read its path (e.g. for dates)
+    // a note's frontmatter, for the plugins that record what they find in it (tags)
     const file = new VFile({ value: src, path: filePath });
-    file.data = { slug, filePath, relativePath };
+    file.data = { slug, filePath, relativePath, frontmatter: { title, tags: [] } };
     const mdast = (await mdProcessor.run(mdProcessor.parse(file) as MdRoot, file)) as MdRoot;
-    const hast = (await htmlProcessor.run(mdast as never, file)) as unknown as HastRoot;
-    return toHtml(hast, { allowDangerousHtml: true });
+    const tree = (await htmlProcessor.run(mdast as never, file)) as unknown as HastRoot;
+    const tags = (file.data.frontmatter as { tags?: unknown } | undefined)?.tags;
+    return {
+      tree,
+      tags: Array.isArray(tags) ? tags.filter((t): t is string => typeof t === "string") : [],
+    };
   };
 }
 
 async function preprocessCanvasData(
   data: CanvasData,
-  file: { slug: FullSlug; filePath: FilePath; relativePath: FilePath },
+  file: { slug: FullSlug; filePath: FilePath; relativePath: FilePath; title: string },
   allSlugs: FullSlug[],
   siteRenderer: CanvasTextRenderer | undefined,
-): Promise<CanvasData & { renderedTexts: Record<string, string> }> {
+): Promise<{ data: CanvasData & Required<CanvasRenderedTexts>; tags: string[] }> {
+  const renderedTrees: Record<string, HastRoot> = {};
   const renderedTexts: Record<string, string> = {};
+  const tags = new Set<string>();
 
   for (const node of data.nodes ?? []) {
     if (node.type === "text" && node.text) {
       if (siteRenderer) {
         try {
-          renderedTexts[node.id] = await siteRenderer(node.text, file);
+          const { title, ...paths } = file;
+          const rendered = await siteRenderer(node.text, paths, title);
+          renderedTrees[node.id] = rendered.tree;
+          for (const tag of rendered.tags) tags.add(tag);
           continue;
         } catch (err) {
           console.warn(
@@ -142,7 +161,7 @@ async function preprocessCanvasData(
     }
   }
 
-  return { ...data, renderedTexts };
+  return { data: { ...data, renderedTrees, renderedTexts }, tags: [...tags] };
 }
 
 const canvasMatcher: PageMatcher = ({ fileData }) => {
@@ -179,9 +198,9 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
           .pop() ?? "Canvas";
       const slug = slugifyFilePath(filePath) as FullSlug;
       const sourcePath = joinSegments(ctx.argv.directory, filePath) as FilePath;
-      const processedData = await preprocessCanvasData(
+      const { data: processedData, tags } = await preprocessCanvasData(
         canvasData,
-        { slug, filePath: sourcePath, relativePath: filePath },
+        { slug, filePath: sourcePath, relativePath: filePath, title: baseName },
         ctx.allSlugs ?? [],
         siteRenderer,
       );
@@ -195,7 +214,8 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
           // file.ext "canvas", and folder listings and the content index see its real path.
           filePath: sourcePath,
           relativePath: filePath,
-          frontmatter: { title: baseName, tags: [] },
+          // the tags written in its text nodes, as a note's are: they get tag pages and list it
+          frontmatter: { title: baseName, tags },
           canvasData: processedData,
           canvasOptions: opts,
         },
