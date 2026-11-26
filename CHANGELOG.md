@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- eb2ba39: feat: text nodes are rendered with the site's own Markdown plugins, like a note, as in Obsidian. Mermaid diagrams render (with Pele, Quartz 5.3's default, or Mermaid.js), and so do callouts, math, syntax highlighting and wikilinks. `textNodeMarkdown: "basic"` keeps the previous plain CommonMark + GFM rendering. A text node that a site plugin fails on falls back to it with a warning. Requires Quartz 5.1+ (asynchronous page generation).
+- b85fc8a: feat: the mouse wheel and two-finger trackpad scroll now pan the canvas, as in Obsidian (Shift + wheel pans sideways); Ctrl/Cmd + wheel and pinching zoom around the pointer, including Safari's pinch gestures. The new `wheelBehavior: "zoom"` option keeps the previous behaviour, where the wheel always zooms.
+
 ## 1.0.4
 
 ### Patch Changes
