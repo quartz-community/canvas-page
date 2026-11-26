@@ -1,4 +1,6 @@
 import type {
+  BuildCtx,
+  PluginTypes,
   QuartzPageTypePlugin,
   PageMatcher,
   FilePath,
@@ -15,6 +17,13 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { micromark } from "micromark";
 import { gfm, gfmHtml } from "micromark-extension-gfm";
+import { unified, type PluggableList } from "unified";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { toHtml } from "hast-util-to-html";
+import type { Root as MdRoot } from "mdast";
+import type { Root as HastRoot } from "hast";
+import { VFile } from "vfile";
 import CanvasBody from "./components/CanvasBody";
 import type { CanvasData, CanvasPageOptions } from "./types";
 
@@ -66,16 +75,70 @@ export function renderCanvasText(text: string, canvasSlug: FullSlug, allSlugs: F
   });
 }
 
-function preprocessCanvasData(
+/** Renders a text node's markdown to HTML for the canvas page `file`. */
+export type CanvasTextRenderer = (
+  text: string,
+  file: { slug: FullSlug; filePath: FilePath; relativePath: FilePath },
+) => Promise<string>;
+
+/**
+ * A renderer that runs text nodes through the site's own Markdown pipeline: every transformer's
+ * `textTransform`, `markdownPlugins` and `htmlPlugins`, in the site's order, as Quartz does for a
+ * note. So text nodes get what notes get, as in Obsidian: wikilinks and embeds, callouts,
+ * Mermaid diagrams (Pele or Mermaid.js, whatever the site uses), math, syntax highlighting, tags,
+ * and links resolved with the site's link resolution.
+ *
+ * Returns `undefined` when the build has no transformers to run (e.g. a bare test context).
+ */
+export function createSiteTextRenderer(ctx: BuildCtx): CanvasTextRenderer | undefined {
+  // `cfg.plugins` is typed `unknown` in @quartz-community/types; Quartz passes its PluginTypes
+  const transformers = (ctx.cfg?.plugins as Partial<PluginTypes> | undefined)?.transformers;
+  if (!transformers || transformers.length === 0) return undefined;
+
+  const mdProcessor = unified()
+    .use(remarkParse)
+    .use(transformers.flatMap((t) => (t.markdownPlugins?.(ctx) ?? []) as PluggableList));
+  const htmlProcessor = unified()
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(transformers.flatMap((t) => (t.htmlPlugins?.(ctx) ?? []) as PluggableList));
+
+  return async (text, { slug, filePath, relativePath }) => {
+    let src = text.trim();
+    for (const t of transformers) {
+      if (t.textTransform) src = t.textTransform(ctx, src);
+    }
+    // the canvas file stands in for the note: plugins resolve links from its slug, and
+    // read its path (e.g. for dates)
+    const file = new VFile({ value: src, path: filePath });
+    file.data = { slug, filePath, relativePath };
+    const mdast = (await mdProcessor.run(mdProcessor.parse(file) as MdRoot, file)) as MdRoot;
+    const hast = (await htmlProcessor.run(mdast as never, file)) as unknown as HastRoot;
+    return toHtml(hast, { allowDangerousHtml: true });
+  };
+}
+
+async function preprocessCanvasData(
   data: CanvasData,
-  canvasSlug: FullSlug,
+  file: { slug: FullSlug; filePath: FilePath; relativePath: FilePath },
   allSlugs: FullSlug[],
-): CanvasData & { renderedTexts: Record<string, string> } {
+  siteRenderer: CanvasTextRenderer | undefined,
+): Promise<CanvasData & { renderedTexts: Record<string, string> }> {
   const renderedTexts: Record<string, string> = {};
 
   for (const node of data.nodes ?? []) {
     if (node.type === "text" && node.text) {
-      renderedTexts[node.id] = renderCanvasText(node.text, canvasSlug, allSlugs);
+      if (siteRenderer) {
+        try {
+          renderedTexts[node.id] = await siteRenderer(node.text, file);
+          continue;
+        } catch (err) {
+          console.warn(
+            `[canvas-page] ${file.relativePath}: text node ${node.id} could not be rendered with the site's Markdown plugins, using basic Markdown:`,
+            err,
+          );
+        }
+      }
+      renderedTexts[node.id] = renderCanvasText(node.text, file.slug, allSlugs);
     }
   }
 
@@ -91,8 +154,10 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
   priority: 20,
   fileExtensions: [".canvas"],
   match: canvasMatcher,
-  generate({ ctx }) {
+  async generate({ ctx }) {
     const canvasFiles = ctx.allFiles.filter((fp) => fp.endsWith(".canvas"));
+    const siteRenderer =
+      (opts?.textNodeMarkdown ?? "site") === "site" ? createSiteTextRenderer(ctx) : undefined;
 
     const virtualPages: VirtualPage[] = [];
 
@@ -113,7 +178,13 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
           .split("/")
           .pop() ?? "Canvas";
       const slug = slugifyFilePath(filePath) as FullSlug;
-      const processedData = preprocessCanvasData(canvasData, slug, ctx.allSlugs ?? []);
+      const sourcePath = joinSegments(ctx.argv.directory, filePath) as FilePath;
+      const processedData = await preprocessCanvasData(
+        canvasData,
+        { slug, filePath: sourcePath, relativePath: filePath },
+        ctx.allSlugs ?? [],
+        siteRenderer,
+      );
 
       virtualPages.push({
         slug,
@@ -122,7 +193,7 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
           // The page stands for the .canvas file: give it the source paths Quartz's parser
           // sets on notes (instead of the synthetic `<slug>.md`), so bases list it with
           // file.ext "canvas", and folder listings and the content index see its real path.
-          filePath: joinSegments(ctx.argv.directory, filePath) as FilePath,
+          filePath: sourcePath,
           relativePath: filePath,
           frontmatter: { title: baseName, tags: [] },
           canvasData: processedData,

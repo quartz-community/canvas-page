@@ -119,6 +119,12 @@ export interface CanvasPageOptions {
   minZoom?: number;
   /** Maximum zoom level. Default: 5 */
   maxZoom?: number;
+  /**
+   * How text nodes' Markdown is rendered. `"site"` (default): with the site's own Markdown
+   * plugins, like a note (wikilinks, callouts, Mermaid diagrams, math, highlighting, …), as in
+   * Obsidian. `"basic"`: plain CommonMark + GFM, with wikilinks and links to notes resolved.
+   */
+  textNodeMarkdown?: "site" | "basic";
 }
 
 /** Preset color map: preset number → CSS color value */

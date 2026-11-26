@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { createCtx } from "./helpers";
-import { CanvasPage, renderCanvasText } from "../src/pageType";
+import { CanvasPage, createSiteTextRenderer, renderCanvasText } from "../src/pageType";
 import type { CanvasData } from "../src/types";
 import type {
   ProcessedContent,
@@ -469,5 +469,69 @@ describe("renderCanvasText link resolution", () => {
     expect(html).toContain('<a href="https://example.com">ext</a>');
     expect(html).toContain('<a href="#top">a</a>');
     expect(html).toContain("![[image.png]]");
+  });
+});
+
+describe("text nodes rendered with the site's Markdown plugins", () => {
+  const plugin = CanvasPage();
+  // a stand-in for ofm's Mermaid handling: ```mermaid -> <div class="mermaid">
+  const mermaidTransformer = {
+    name: "FakeMermaid",
+    textTransform: (_ctx: unknown, src: string) => src.replace("{{name}}", "World"),
+    markdownPlugins: () => [
+      () => (tree: { children: Array<{ type: string; lang?: string; value?: string }> }) => {
+        tree.children = tree.children.map((n) =>
+          n.type === "code" && n.lang === "mermaid"
+            ? ({
+                type: "mermaidDiagram",
+                data: { hName: "div", hProperties: { className: ["mermaid"] } },
+                children: [{ type: "text", value: n.value }],
+              } as never)
+            : n,
+        );
+      },
+    ],
+    htmlPlugins: () => [],
+  };
+
+  const makeCtx = (transformers: unknown[]) =>
+    createCtx({ cfg: { configuration: {}, plugins: { transformers } } as never });
+
+  it("runs textTransform, markdownPlugins and htmlPlugins", async () => {
+    const render = createSiteTextRenderer(makeCtx([mermaidTransformer]))!;
+    const html = await render("Hello {{name}}\n\n```mermaid\ngraph TD\nA-->B\n```", {
+      slug: "board.canvas" as FullSlug,
+      filePath: "content/board.canvas" as FilePath,
+      relativePath: "board.canvas" as FilePath,
+    });
+    expect(html).toContain("<p>Hello World</p>");
+    expect(html).toMatch(/<div class="mermaid">graph TD\nA--(>|&#x3E;|&gt;)B<\/div>/);
+  });
+
+  it("is not used without transformers (basic rendering)", () => {
+    expect(createSiteTextRenderer(createCtx())).toBeUndefined();
+  });
+
+  it("falls back to basic Markdown when a site plugin throws", async () => {
+    const broken = {
+      name: "Broken",
+      markdownPlugins: () => [
+        () => () => {
+          throw new Error("boom");
+        },
+      ],
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const ctx = makeCtx([broken]);
+    ctx.allFiles = ["b.canvas" as FilePath];
+    const pages = await plugin.generate!({ content: [], cfg: ctx.cfg.configuration, ctx });
+    const data = pages[0]!.data.canvasData as { renderedTexts: Record<string, string> };
+    // the mocked file is sampleCanvas: its text node gets the basic renderer's output
+    const textNode = sampleCanvas.nodes!.find((n) => n.type === "text")!;
+    expect(data.renderedTexts[textNode.id]).toBe(
+      renderCanvasText(textNode.text!, "b.canvas" as FullSlug, []),
+    );
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
