@@ -752,6 +752,31 @@ describe("text node content on the canvas page", () => {
     expect(html.t2).toContain('id="node-t2--doc--other"');
   });
 
+  it("scopes the ids of text nodes rendered with basic Markdown too", () => {
+    const md = "# Same\n\nfootnote[^1]\n\n[^1]: one";
+    const renderedTexts = {
+      b1: renderCanvasText(md, "board.canvas" as FullSlug, []),
+      b2: renderCanvasText(md, "board.canvas" as FullSlug, []),
+    };
+    const data = {
+      ...canvasData({}),
+      nodes: canvasData({ b1: footnoted([]), b2: footnoted([]) }).nodes,
+      renderedTexts,
+    };
+    const html = renderedNodeHtml(data, allFiles);
+    const ids = Object.values(html).flatMap((h) =>
+      [...h.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]),
+    );
+    expect(ids.length).toBeGreaterThan(0);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const [nodeId, h] of Object.entries(html)) {
+      expect(h).toContain(`href="#node-${nodeId}--user-content-fn-1"`);
+      expect(h).toContain(`id="node-${nodeId}--user-content-fn-1"`);
+      expect(h).toContain(`href="#node-${nodeId}--user-content-fnref-1"`);
+      expect(h).toContain(`aria-describedby="node-${nodeId}--footnote-label"`);
+    }
+  });
+
   it("fills the embeds inside a file node's note and scopes its ids", () => {
     const withEmbed: HastRoot = {
       type: "root",

@@ -232,6 +232,31 @@ export function scopeIds(el: Element | Root, prefix: string, sourceHref?: string
   });
 }
 
+/**
+ * {@link scopeIds} for the HTML of the basic renderer (`textNodeMarkdown: "basic"`, micromark).
+ * micromark escapes raw HTML, so the only ids in it are the ones it writes itself (footnotes:
+ * `user-content-fn-1`, `user-content-fnref-1`, `footnote-label`) in `id`, `href="#…"` and
+ * `aria-describedby` attributes of its own, always double-quoted.
+ */
+export function scopeHtmlIds(html: string, prefix: string): string {
+  const ids = new Set([...html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]!));
+  if (ids.size === 0) return html;
+  return html.replace(
+    / (id|href|aria-describedby)="(#?)([^"]*)"/g,
+    (match, name: string, hash: string, value: string) => {
+      if (name === "href" && hash !== "#") return match;
+      if (name !== "href" && hash === "#") return match;
+      if (name === "aria-describedby") {
+        return ` ${name}="${value
+          .split(/\s+/)
+          .map((t) => (ids.has(t) ? `${prefix}${t}` : t))
+          .join(" ")}"`;
+      }
+      return ids.has(value) ? ` ${name}="${hash}${prefix}${value}"` : match;
+    },
+  );
+}
+
 export function findPage(
   fileSlug: FullSlug,
   allFiles: QuartzPluginData[],
