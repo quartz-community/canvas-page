@@ -28,6 +28,7 @@ import {
   removeEmptyParagraphs,
   renderTranscludes,
   scopeIds,
+  scopeHtmlIds,
   sliceWithFootnotes,
 } from "./transclude";
 import style from "./styles/canvas.scss";
@@ -235,9 +236,10 @@ function renderNode(
   switch (node.type) {
     case "text": {
       const tree = rendered.renderedTrees?.[node.id];
+      const basic = rendered.renderedTexts?.[node.id];
       const html = tree
         ? finishNodeContent(structuredClone(tree), node.id, rctx)
-        : rendered.renderedTexts?.[node.id];
+        : basic && scopeHtmlIds(basic, rctx.scopeFor(`node-${node.id}`));
       return (
         <div class="canvas-node canvas-node-text" data-node-id={node.id} style={styleStr}>
           {html ? (
