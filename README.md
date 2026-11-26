@@ -41,12 +41,13 @@ ExternalPlugin.CanvasPage({
 
 ## Configuration
 
-| Option              | Type      | Default | Description                                                |
-| ------------------- | --------- | ------- | ---------------------------------------------------------- |
-| `enableInteraction` | `boolean` | `true`  | Whether to enable pan and zoom interaction on the canvas.  |
-| `initialZoom`       | `number`  | `1`     | The initial zoom level when the canvas is first displayed. |
-| `minZoom`           | `number`  | `0.1`   | The minimum zoom level allowed when zooming out.           |
-| `maxZoom`           | `number`  | `5`     | The maximum zoom level allowed when zooming in.            |
+| Option              | Type              | Default | Description                                                                                                                                                                            |
+| ------------------- | ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enableInteraction` | `boolean`         | `true`  | Whether to enable pan and zoom interaction on the canvas.                                                                                                                              |
+| `initialZoom`       | `number`          | `1`     | The initial zoom level when the canvas is first displayed.                                                                                                                             |
+| `minZoom`           | `number`          | `0.1`   | The minimum zoom level allowed when zooming out.                                                                                                                                       |
+| `maxZoom`           | `number`          | `5`     | The maximum zoom level allowed when zooming in.                                                                                                                                        |
+| `wheelBehavior`     | `"pan" \| "zoom"` | `"pan"` | What the mouse wheel / two-finger scroll does. `"pan"` moves the canvas like Obsidian (Shift + wheel: sideways); Ctrl/Cmd + wheel and pinching zoom. `"zoom"`: the wheel always zooms. |
 
 ## Documentation
 

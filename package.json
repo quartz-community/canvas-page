@@ -110,7 +110,8 @@
       "enableInteraction": true,
       "initialZoom": 1,
       "minZoom": 0.1,
-      "maxZoom": 5
+      "maxZoom": 5,
+      "wheelBehavior": "pan"
     },
     "frames": {
       "CanvasFrame": {
@@ -129,6 +130,13 @@
       },
       "maxZoom": {
         "type": "number"
+      },
+      "wheelBehavior": {
+        "type": "string",
+        "enum": [
+          "pan",
+          "zoom"
+        ]
       }
     }
   },
