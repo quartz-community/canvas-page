@@ -119,6 +119,12 @@ export interface CanvasPageOptions {
   minZoom?: number;
   /** Maximum zoom level. Default: 5 */
   maxZoom?: number;
+  /**
+   * What a plain mouse wheel / two-finger trackpad scroll does. `"pan"` (default) moves the
+   * canvas, as in Obsidian; Ctrl/Cmd + wheel and pinching zoom. `"zoom"` makes the plain wheel
+   * zoom as well (the behaviour before 1.1).
+   */
+  wheelBehavior?: "pan" | "zoom";
 }
 
 /** Preset color map: preset number → CSS color value */
