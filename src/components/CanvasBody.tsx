@@ -455,6 +455,7 @@ export default ((userOpts?: CanvasPageOptions) => {
     const initialZoom = opts.initialZoom ?? 1;
     const minZoom = opts.minZoom ?? 0.1;
     const maxZoom = opts.maxZoom ?? 5;
+    const wheelBehavior = opts.wheelBehavior === "zoom" ? "zoom" : "pan";
     return (
       <article class="canvas-page popover-hint">
         <div
@@ -463,6 +464,7 @@ export default ((userOpts?: CanvasPageOptions) => {
           data-initial-zoom={initialZoom.toString()}
           data-min-zoom={minZoom.toString()}
           data-max-zoom={maxZoom.toString()}
+          data-wheel-behavior={wheelBehavior}
         >
           <div class="canvas-controls">
             <div class="canvas-zoom-group">

@@ -59,38 +59,77 @@ function initCanvas() {
     const cleanupFns: Array<() => void> = [];
 
     if (enableInteraction) {
+      const zoomAt = (clientX: number, clientY: number, factor: number) => {
+        const rect = container.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        const prevZoom = zoom;
+        zoom = Math.max(minZoom, Math.min(maxZoom, zoom * factor));
+        panX = x - (x - panX) * (zoom / prevZoom);
+        panY = y - (y - panY) * (zoom / prevZoom);
+        applyTransform();
+        updateResetButton();
+      };
+
+      // Like Obsidian (and Figma): the wheel / two-finger scroll pans, Ctrl/Cmd + wheel and a
+      // trackpad pinch (which browsers send as a wheel event with ctrlKey) zoom.
+      // `wheelBehavior: "zoom"` keeps the old behaviour: the plain wheel zooms too.
+      const wheelZooms = container.dataset.wheelBehavior === "zoom";
+
       const onWheel = (e: WheelEvent) => {
-        // If the wheel target is inside a scrollable text node, let it scroll naturally
+        const zoomGesture = e.ctrlKey || e.metaKey || wheelZooms;
+        // Line/page deltas (Firefox with a mouse wheel) to pixels
+        const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? container.clientHeight : 1;
+        let dx = e.deltaX * unit;
+        let dy = e.deltaY * unit;
+        // Shift + mouse wheel scrolls sideways (some platforms already swap the axes)
+        if (e.shiftKey && dx === 0) {
+          dx = dy;
+          dy = 0;
+        }
+
+        // A wheel over a scrollable text node scrolls the node until it hits its edge
         const scrollable =
-          e.target instanceof HTMLElement ? e.target.closest(".canvas-node-content") : null;
-        if (scrollable) {
-          const canScroll = scrollable.scrollHeight > scrollable.clientHeight;
-          if (canScroll) {
-            const atTop = scrollable.scrollTop <= 0;
-            const atBottom =
-              scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
-            const scrollingDown = e.deltaY > 0;
-            const scrollingUp = e.deltaY < 0;
-            // Only let it through to zoom if at boundary AND scrolling past it
-            if (!(atTop && scrollingUp) && !(atBottom && scrollingDown)) {
-              return; // Let the browser scroll the text node
-            }
+          !e.ctrlKey && !e.metaKey && e.target instanceof HTMLElement
+            ? e.target.closest(".canvas-node-content")
+            : null;
+        if (scrollable && scrollable.scrollHeight > scrollable.clientHeight && dy !== 0) {
+          const atTop = scrollable.scrollTop <= 0;
+          const atBottom =
+            scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
+          if (!(atTop && dy < 0) && !(atBottom && dy > 0)) {
+            return; // Let the browser scroll the text node
           }
         }
 
         e.preventDefault();
+        if (zoomGesture) {
+          // Pinches send many small deltas, mouse wheels few large ones (capped at a 10% step)
+          const step = Math.min(Math.abs(dy || dx), 10) / 100;
+          const sign = Math.sign(dy || dx);
+          zoomAt(e.clientX, e.clientY, Math.exp(-sign * step));
+        } else {
+          panX -= dx;
+          panY -= dy;
+          applyTransform();
+          updateResetButton();
+        }
+      };
+
+      // Safari sends trackpad pinches as gesture events instead of ctrl + wheel
+      let gestureStartZoom = 1;
+      const onGestureStart = (e: Event) => {
+        e.preventDefault();
+        gestureStartZoom = zoom;
+      };
+      const onGestureChange = (e: Event) => {
+        const ge = e as Event & { scale?: number; clientX?: number; clientY?: number };
+        if (typeof ge.scale !== "number") return;
+        e.preventDefault();
         const rect = container.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        const prevZoom = zoom;
-        const delta = e.deltaY > 0 ? 0.9 : 1.1;
-        zoom = Math.max(minZoom, Math.min(maxZoom, zoom * delta));
-
-        panX = mouseX - (mouseX - panX) * (zoom / prevZoom);
-        panY = mouseY - (mouseY - panY) * (zoom / prevZoom);
-        applyTransform();
-        updateResetButton();
+        const cx = ge.clientX ?? rect.left + rect.width / 2;
+        const cy = ge.clientY ?? rect.top + rect.height / 2;
+        zoomAt(cx, cy, (gestureStartZoom * ge.scale) / zoom);
       };
 
       const onPointerDown = (e: PointerEvent) => {
@@ -127,6 +166,8 @@ function initCanvas() {
       };
 
       container.addEventListener("wheel", onWheel, { passive: false });
+      container.addEventListener("gesturestart", onGestureStart);
+      container.addEventListener("gesturechange", onGestureChange);
       container.addEventListener("pointerdown", onPointerDown);
       container.addEventListener("pointermove", onPointerMove);
       container.addEventListener("pointerup", onPointerUp);
@@ -201,6 +242,8 @@ function initCanvas() {
 
       cleanupFns.push(() => {
         container.removeEventListener("wheel", onWheel);
+        container.removeEventListener("gesturestart", onGestureStart);
+        container.removeEventListener("gesturechange", onGestureChange);
         container.removeEventListener("pointerdown", onPointerDown);
         container.removeEventListener("pointermove", onPointerMove);
         container.removeEventListener("pointerup", onPointerUp);

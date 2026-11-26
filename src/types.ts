@@ -125,6 +125,12 @@ export interface CanvasPageOptions {
    * Obsidian. `"basic"`: plain CommonMark + GFM, with wikilinks and links to notes resolved.
    */
   textNodeMarkdown?: "site" | "basic";
+  /**
+   * What a plain mouse wheel / two-finger trackpad scroll does. `"pan"` (default) moves the
+   * canvas, as in Obsidian; Ctrl/Cmd + wheel and pinching zoom. `"zoom"` makes the plain wheel
+   * zoom as well (the behaviour before 1.1).
+   */
+  wheelBehavior?: "pan" | "zoom";
 }
 
 /** Preset color map: preset number → CSS color value */

@@ -114,7 +114,8 @@
       "initialZoom": 1,
       "minZoom": 0.1,
       "maxZoom": 5,
-      "textNodeMarkdown": "site"
+      "textNodeMarkdown": "site",
+      "wheelBehavior": "pan"
     },
     "frames": {
       "CanvasFrame": {
@@ -139,6 +140,13 @@
         "enum": [
           "site",
           "basic"
+        ]
+      },
+      "wheelBehavior": {
+        "type": "string",
+        "enum": [
+          "pan",
+          "zoom"
         ]
       }
     }
