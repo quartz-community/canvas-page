@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.3
+
+### Patch Changes
+
+- 5908950: Text nodes rendered with `textNodeMarkdown: basic` get their ids scoped per node too, so footnotes in two text nodes no longer share ids and their links go to their own node's footnotes.
+
 ## 1.1.2
 
 ### Patch Changes
