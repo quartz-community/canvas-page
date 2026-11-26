@@ -9,7 +9,8 @@ import type {
   QuartzPluginData,
 } from "@quartz-community/types";
 import type { Root as HastRoot } from "hast";
-import { resolveEmbeddedHtml } from "../src/components/CanvasBody";
+import CanvasBody, { resolveEmbeddedHtml } from "../src/components/CanvasBody";
+import { toHtml } from "hast-util-to-html";
 import { slugifyFilePath } from "@quartz-community/utils/path";
 
 const sampleCanvas: CanvasData = {
@@ -499,11 +500,12 @@ describe("text nodes rendered with the site's Markdown plugins", () => {
 
   it("runs textTransform, markdownPlugins and htmlPlugins", async () => {
     const render = createSiteTextRenderer(makeCtx([mermaidTransformer]))!;
-    const html = await render("Hello {{name}}\n\n```mermaid\ngraph TD\nA-->B\n```", {
+    const { tree } = await render("Hello {{name}}\n\n```mermaid\ngraph TD\nA-->B\n```", {
       slug: "board.canvas" as FullSlug,
       filePath: "content/board.canvas" as FilePath,
       relativePath: "board.canvas" as FilePath,
     });
+    const html = toHtml(tree);
     expect(html).toContain("<p>Hello World</p>");
     expect(html).toMatch(/<div class="mermaid">graph TD\nA--(>|&#x3E;|&gt;)B<\/div>/);
   });
@@ -533,5 +535,247 @@ describe("text nodes rendered with the site's Markdown plugins", () => {
     );
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+const el = (
+  tagName: string,
+  properties: Record<string, unknown> = {},
+  children: HastRoot["children"] = [],
+) => ({ type: "element" as const, tagName, properties, children }) as HastRoot["children"][number];
+const text = (value: string) => ({ type: "text" as const, value });
+
+/** The HTML CanvasBody renders into each node's content, by node id. */
+function renderedNodeHtml(
+  canvasData: Record<string, unknown>,
+  allFiles: QuartzPluginData[],
+  slug = "board.canvas",
+): Record<string, string> {
+  const Body = CanvasBody();
+  const vnode = Body({
+    fileData: { slug, canvasData } as unknown as QuartzPluginData,
+    allFiles,
+    cfg: {},
+  } as never) as unknown;
+  const out: Record<string, string> = {};
+  const walk = (node: unknown, nodeId?: string) => {
+    if (Array.isArray(node)) return node.forEach((n) => walk(n, nodeId));
+    if (!node || typeof node !== "object") return;
+    const props = (node as { props?: Record<string, unknown> }).props ?? {};
+    const id = (props["data-node-id"] as string | undefined) ?? nodeId;
+    const inner = props.dangerouslySetInnerHTML as { __html: string } | undefined;
+    if (inner && id) out[id] = inner.__html;
+    walk(props.children, id);
+  };
+  walk(vnode);
+  return out;
+}
+
+describe("file nodes with a heading subpath (Obsidian stores the heading's text)", () => {
+  const doc: HastRoot = {
+    type: "root",
+    children: [
+      el("div", { className: ["el-h2"] }, [
+        el("h2", { id: "sub-section", dataHeading: "Sub Section" }, [text("Sub Section")]),
+      ]),
+      el("div", { className: ["el-p"] }, [el("p", {}, [text("Body of sub section.")])]),
+      el("div", { className: ["el-h3"] }, [
+        // with `slugs.stripDiacritics` the id has no accents, the subpath does
+        el("h3", { id: "ca-va", dataHeading: "Ça va" }, [text("Ça va")]),
+      ]),
+      el("p", {}, [text("accent body.")]),
+      el("h2", { id: "colon-unspaced" }, [
+        text("Colon:unspaced"),
+        el("a", { role: "anchor", href: "#colon-unspaced" }, [text("#")]),
+      ]),
+      el("p", {}, [text("colon body.")]),
+      el("h2", { id: "other" }, [text("Other")]),
+      el("p", {}, [text("Other body.")]),
+    ],
+  };
+  const allFiles = [{ slug: "doc", htmlAst: doc } as unknown as QuartzPluginData];
+  const embed = (subpath: string) =>
+    resolveEmbeddedHtml("doc" as FullSlug, "board.canvas" as FullSlug, allFiles, subpath);
+
+  it("finds the heading by its text, inside block wrappers", () => {
+    const html = embed("#Sub Section");
+    expect(html).toContain("Body of sub section.");
+    expect(html).not.toContain("Other body.");
+  });
+
+  it("finds a heading with accents, also when its id was stripped of them", () => {
+    const html = embed("#Ça va");
+    expect(html).toContain("accent body.");
+    expect(html).not.toContain("Other body.");
+  });
+
+  it("finds a heading by the anchor Obsidian writes for it, and still by its id", () => {
+    expect(embed("#Colon unspaced")).toContain("colon body.");
+    expect(embed("#other")).toContain("Other body.");
+  });
+});
+
+describe("text node tags", () => {
+  it("are the canvas page's tags, so tag pages are built for them", async () => {
+    // a stand-in for ofm's tag parsing: records `#tag` in the note's frontmatter
+    const tagTransformer = {
+      name: "FakeTags",
+      markdownPlugins: () => [
+        () => (_tree: unknown, file: { data: { frontmatter?: { tags?: string[] } } }) => {
+          file.data.frontmatter!.tags = [...(file.data.frontmatter!.tags ?? []), "canvastag"];
+        },
+      ],
+    };
+    const ctx = createCtx({
+      cfg: { configuration: {}, plugins: { transformers: [tagTransformer] } } as never,
+    });
+    ctx.allFiles = ["b.canvas" as FilePath];
+    const pages = await CanvasPage().generate!({ content: [], cfg: ctx.cfg.configuration, ctx });
+    expect(pages[0]!.data.frontmatter).toEqual({ title: "b", tags: ["canvastag"] });
+  });
+});
+
+describe("text node content on the canvas page", () => {
+  const doc: HastRoot = {
+    type: "root",
+    children: [
+      el("h1", { id: "doc" }, [text("Doc")]),
+      el("h2", { id: "other", dataHeading: "Other" }, [text("Other")]),
+      el("p", {}, [text("Other body."), el("a", { href: "./x" }, [text("x")])]),
+    ],
+  };
+  const creme: HastRoot = { type: "root", children: [el("p", {}, [text("Crème body.")])] };
+  const allFiles = [
+    { slug: "doc", htmlAst: doc, frontmatter: { title: "Doc" } },
+    { slug: "cafe/creme-brulee", htmlAst: creme, frontmatter: { title: "Crème brûlée" } },
+    { slug: "board.canvas", frontmatter: { title: "board" } },
+  ] as unknown as QuartzPluginData[];
+
+  const transclude = (slug: string, block = "") =>
+    el("div", { className: ["transclude", "internal-embed"], dataUrl: slug, dataBlock: block }, [
+      el("a", { href: `./${slug}${block}`, className: ["transclude-inner"], dataSlug: slug }, [
+        text(`Transclude of ${slug}${block}`),
+      ]),
+    ]);
+  // what the site's Markdown plugins render for "# Same\nfootnote[^1] …\n\n[^1]: one"
+  const footnoted = (extra: HastRoot["children"]): HastRoot => ({
+    type: "root",
+    children: [
+      el("h1", { id: "same" }, [text("Same")]),
+      el("p", {}, [
+        text("footnote"),
+        el("sup", {}, [
+          el(
+            "a",
+            {
+              href: "#user-content-fn-1",
+              id: "user-content-fnref-1",
+              dataFootnoteRef: "",
+              ariaDescribedBy: "footnote-label",
+            },
+            [text("1")],
+          ),
+        ]),
+        el("a", { href: "#same" }, [text("self")]),
+      ]),
+      ...extra,
+      el("section", { dataFootnotes: "", className: ["footnotes"] }, [
+        el("h2", { id: "footnote-label" }, [text("Footnotes")]),
+        el("ol", {}, [el("li", { id: "user-content-fn-1" }, [text("note")])]),
+      ]),
+    ],
+  });
+
+  const canvasData = (trees: Record<string, HastRoot>) => ({
+    nodes: Object.keys(trees).map((id, i) => ({
+      id,
+      type: "text",
+      text: "…",
+      x: i * 300,
+      y: 0,
+      width: 200,
+      height: 100,
+    })),
+    edges: [],
+    renderedTrees: trees,
+  });
+
+  it("renders embeds as Quartz does on a note, without empty paragraphs around them", () => {
+    const html = renderedNodeHtml(
+      canvasData({
+        t1: {
+          type: "root",
+          children: [
+            el("div", { className: ["el-p"] }, [el("p", {}, [])]),
+            transclude("doc", "#other"),
+            el("p", {}, [text(" ")]),
+            transclude("cafe/creme-brulee"),
+          ],
+        },
+      }),
+      allFiles,
+    ).t1!;
+    expect(html).not.toContain("Transclude of");
+    expect(html).toContain("Other body.");
+    expect(html).not.toContain(">Doc<");
+    expect(html).toContain('class="embed-title markdown-embed-title">Crème brûlée</div>');
+    expect(html).toContain("Crème body.");
+    expect(html).toContain("transclude-src");
+    expect(html).not.toMatch(/<p>\s*<\/p>/);
+  });
+
+  it("cuts circular embeds (the canvas embedding itself)", () => {
+    const html = renderedNodeHtml(
+      canvasData({ t1: { type: "root", children: [transclude("board.canvas")] } }),
+      allFiles,
+    ).t1!;
+    expect(html).toContain("Circular transclusion detected: board.canvas");
+  });
+
+  it("gives each text node's ids a prefix of its own and points its links at them", () => {
+    const html = renderedNodeHtml(
+      canvasData({ t1: footnoted([]), t2: footnoted([transclude("doc", "#other")]) }),
+      allFiles,
+    );
+    const ids = Object.values(html).flatMap((h) =>
+      [...h.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]),
+    );
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const [nodeId, h] of Object.entries(html)) {
+      expect(h).toContain(`id="node-${nodeId}--same"`);
+      expect(h).toContain(`href="#node-${nodeId}--same"`);
+      expect(h).toContain(`href="#node-${nodeId}--user-content-fn-1"`);
+      expect(h).toContain(`id="node-${nodeId}--user-content-fn-1"`);
+      expect(h).toContain(`aria-describedby="node-${nodeId}--footnote-label"`);
+    }
+    // the embedded heading section's ids are scoped twice: by its node and its embed
+    expect(html.t2).toContain('id="node-t2--doc--other"');
+  });
+
+  it("fills the embeds inside a file node's note and scopes its ids", () => {
+    const withEmbed: HastRoot = {
+      type: "root",
+      children: [el("h2", { id: "intro" }, [text("Intro")]), transclude("doc", "#other")],
+    };
+    const files = [
+      ...allFiles,
+      { slug: "host", htmlAst: withEmbed, frontmatter: { title: "Host" } },
+    ] as unknown as QuartzPluginData[];
+    const data = {
+      nodes: ["f1", "f2"].map((id, i) => ({
+        id,
+        type: "file",
+        file: "host.md",
+        x: i * 300,
+        y: 0,
+        width: 200,
+        height: 100,
+      })),
+      edges: [],
+    };
+    const html = renderedNodeHtml(data, files);
+    expect(html.f1).toContain("Other body.");
+    expect(html.f1).toContain('id="node-f1--intro"');
+    expect(html.f2).toContain('id="node-f2--intro"');
   });
 });
