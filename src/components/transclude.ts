@@ -407,7 +407,7 @@ export function renderTranscludes(root: Element | Root, tctx: TranscludeContext)
       const ref = el.properties?.dataBlock as string | undefined;
       if (ref?.startsWith("#^")) {
         const blocks = (page as { blocks?: Record<string, Element> }).blocks;
-        let blockNode = blocks?.[ref.slice(2)];
+        let blockNode = blocks?.[ref.slice(2).toLowerCase()];
         if (blockNode) {
           if (blockNode.tagName === "li") {
             blockNode = { type: "element", tagName: "ul", properties: {}, children: [blockNode] };
