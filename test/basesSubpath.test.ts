@@ -63,19 +63,57 @@ describe("a file node showing one view of a base", () => {
     expect(embed("#list")).toBeUndefined();
   });
 
-  // bug: CanvasBody's findBasesView matches only data-view-type, not the view's name (the tab
-  // label), though its comment says both. `#Done` (a view's name, as `![[tasks.base#Done]]`
-  // names it) finds nothing, and two views of one type can't be told apart.
-  it.fails("selects a view by its name", () => {
+  it("selects a view by its name", () => {
     const done = embed("#Done");
     expect(done).toContain("Done tasks");
     expect(done).not.toContain("Open tasks");
+    expect(done).not.toContain("Task board");
   });
 
-  // bug: the selected view is returned without `is-active` (the comment says "marked active"),
-  // so with bases-page's stylesheet a view other than the first is hidden in the node.
-  it.fails("shows the view it selects", () => {
-    const html = embed("#cards") ?? "";
-    expect(html).toMatch(/class="bases-view is-active"[^>]*>Task board/);
+  it("matches a view's name by its slug when not exactly", () => {
+    expect(embed("#done")).toContain("Done tasks");
+    expect(embed("#board")).toContain("Task board");
+  });
+
+  it("prefers a view's name over a view type", () => {
+    const named = [
+      {
+        slug: "named.base" as FullSlug,
+        basesData: {},
+        htmlAst: {
+          type: "root",
+          children: [
+            el("div", { className: ["bases-page"] }, [
+              el("div", { role: "tablist" }, [tab(0, "Overview"), tab(1, "cards")]),
+              el("div", { className: ["bases-view-container"] }, [
+                panel(0, "Card grid", "cards"),
+                panel(1, "Table named cards"),
+              ]),
+            ]),
+          ],
+        } as HastRoot,
+      } as unknown as QuartzPluginData,
+    ];
+    const html = resolveEmbeddedHtml(
+      "named.base" as FullSlug,
+      "c.canvas" as FullSlug,
+      named,
+      "#cards",
+    );
+    expect(html).toContain("Table named cards");
+    expect(html).not.toContain("Card grid");
+  });
+
+  it("shows the view it selects", () => {
+    expect(embed("#cards") ?? "").toMatch(/class="bases-view is-active"[^>]*>Task board/);
+    expect(embed("#Done") ?? "").toMatch(/class="bases-view is-active"[^>]*>Done tasks/);
+    // the first view is active already: not marked twice
+    expect(embed("#Open") ?? "").toMatch(/class="bases-view is-active"[^>]*>Open tasks/);
+  });
+
+  it("leaves the base's own tree unchanged", () => {
+    embed("#Done");
+    const container = (htmlAst.children[0] as Element).children[1] as Element;
+    expect((container.children[1] as Element).properties.className).toEqual(["bases-view"]);
   });
 });
