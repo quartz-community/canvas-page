@@ -619,9 +619,10 @@ describe("file nodes with a heading subpath (Obsidian stores the heading's text)
         el("h3", { id: "ca-va", dataHeading: "Ça va" }, [text("Ça va")]),
       ]),
       el("p", {}, [text("accent body.")]),
-      el("h2", { id: "colon-unspaced" }, [
+      // GitHub's slugger drops the colon: `## Colon:unspaced` gets the id `colonunspaced`
+      el("h2", { id: "colonunspaced" }, [
         text("Colon:unspaced"),
-        el("a", { role: "anchor", href: "#colon-unspaced" }, [text("#")]),
+        el("a", { role: "anchor", href: "#colonunspaced" }, [text("#")]),
       ]),
       el("p", {}, [text("colon body.")]),
       el("h2", { id: "other" }, [text("Other")]),
@@ -635,6 +636,10 @@ describe("file nodes with a heading subpath (Obsidian stores the heading's text)
   it("finds the heading by its text, inside block wrappers", () => {
     const html = embed("#Sub Section");
     expect(html).toContain("Body of sub section.");
+    // the h3 under it is part of the section, up to the next h2
+    expect(html).toContain('<h3 id="ca-va" data-heading="Ça va">Ça va</h3>');
+    expect(html).toContain("accent body.");
+    expect(html).not.toContain("colon body.");
     expect(html).not.toContain("Other body.");
   });
 
@@ -837,5 +842,263 @@ describe("text node content on the canvas page", () => {
     expect(html.f1).toContain("Other body.");
     expect(html.f1).toContain('id="node-f1--intro"');
     expect(html.f2).toContain('id="node-f2--intro"');
+    // the second file node fills its embed too (not cut as a cycle), with ids of its own
+    expect(html.f2).toContain("Other body.");
+    expect(html.f2).not.toContain("Circular transclusion");
+    expect(html.f1).toContain('id="node-f1--doc--other"');
+    expect(html.f2).toContain('id="node-f2--doc-2--other"');
+  });
+  it("fills the same embed in two text nodes, each with ids of its own", () => {
+    const html = renderedNodeHtml(
+      canvasData({
+        t1: { type: "root", children: [transclude("doc", "#other")] },
+        t2: { type: "root", children: [transclude("doc", "#other")] },
+      }),
+      allFiles,
+    );
+    for (const h of [html.t1!, html.t2!]) {
+      expect(h).toContain("Other body.");
+      expect(h).not.toContain("Circular transclusion");
+    }
+    expect(html.t1).toContain('<h2 id="node-t1--doc--other" data-heading="Other">Other</h2>');
+    expect(html.t2).toContain('<h2 id="node-t2--doc-2--other" data-heading="Other">Other</h2>');
+  });
+
+  it("fills nested embeds and cuts a note embedding itself", () => {
+    const files = [
+      ...allFiles,
+      { slug: "a", htmlAst: { type: "root", children: [transclude("b")] } },
+      { slug: "b", htmlAst: { type: "root", children: [el("p", {}, [text("B body.")])] } },
+      { slug: "self", htmlAst: { type: "root", children: [transclude("self")] } },
+    ] as unknown as QuartzPluginData[];
+    const html = renderedNodeHtml(
+      canvasData({
+        t1: { type: "root", children: [transclude("a")] },
+        t2: { type: "root", children: [transclude("self")] },
+      }),
+      files,
+    );
+    expect(html.t1).toContain(
+      '<div class="markdown-preview-view markdown-rendered"><p>B body.</p></div>',
+    );
+    expect(html.t1).not.toContain('class="transclude-inner"');
+    expect(html.t2).toContain(
+      '<p style="color: var(--secondary);">Circular transclusion detected: self</p>',
+    );
+  });
+
+  it("keeps the link of an embed whose target or section doesn't exist", () => {
+    const files = [
+      ...allFiles,
+      { slug: "nohtml", frontmatter: { title: "No HTML" } },
+    ] as unknown as QuartzPluginData[];
+    const data = {
+      nodes: [
+        { id: "t1", type: "text", text: "…", x: 0, y: 0, width: 200, height: 100 },
+        { id: "f1", type: "file", file: "missing.md", x: 300, y: 0, width: 200, height: 100 },
+      ],
+      edges: [],
+      renderedTrees: {
+        t1: {
+          type: "root",
+          children: [transclude("missing"), transclude("doc", "#Nope"), transclude("nohtml")],
+        },
+      },
+    };
+    const Body = CanvasBody();
+    const vnode = Body({
+      fileData: { slug: "board.canvas", canvasData: data } as unknown as QuartzPluginData,
+      allFiles: files,
+      cfg: {},
+    } as never);
+    const html = renderedNodeHtml(data, files);
+    for (const target of ["missing", "doc#Nope", "nohtml"]) {
+      expect(html.t1).toContain(
+        `<a href="./${target}" class="transclude-inner" data-slug="${target.split("#")[0]}">Transclude of ${target}</a>`,
+      );
+    }
+    expect(html.t1).not.toContain("markdown-embed");
+    // the file node has no content to show: its label links to the note
+    expect(html.f1).toBeUndefined();
+    const fileNode = findVnodes(vnode, (p) => p["data-node-id"] === "f1")[0]!;
+    const links = findVnodes(
+      fileNode,
+      (p) => p.class === "canvas-file-link internal internal-link",
+    );
+    expect(links.map((l) => [l.props.href, l.props.children])).toEqual([
+      ["./missing", "missing"],
+      ["./missing", "missing"],
+    ]);
+  });
+
+  it("embeds a block by its ^id in any case, and a list item inside its list", () => {
+    const files = [
+      ...allFiles,
+      {
+        slug: "blocks",
+        htmlAst: { type: "root", children: [] },
+        blocks: {
+          "para-1": el("p", { id: "^para-1" }, [text("The block")]),
+          item: el("li", { id: "^item" }, [text("An item")]),
+        },
+      },
+    ] as unknown as QuartzPluginData[];
+    const html = renderedNodeHtml(
+      canvasData({
+        t1: {
+          type: "root",
+          children: [transclude("blocks", "#^Para-1"), transclude("blocks", "#^item")],
+        },
+      }),
+      files,
+    ).t1!;
+    expect(html).not.toContain("Transclude of");
+    expect(html).toContain(
+      '<div class="markdown-preview-view markdown-rendered"><p id="node-t1--blocks--^para-1">The block</p></div>',
+    );
+    expect(html).toContain(
+      '<div class="markdown-preview-view markdown-rendered"><ul><li id="node-t1--blocks-2--^item">An item</li></ul></div>',
+    );
+  });
+
+  it("rebases the links inside an embed from a note in a folder", () => {
+    const files = [
+      ...allFiles.filter((f) => f.slug !== "cafe/creme-brulee"),
+      {
+        slug: "cafe/creme-brulee",
+        htmlAst: { type: "root", children: [el("p", {}, [el("a", { href: "./x" }, [text("x")])])] },
+        frontmatter: { title: "Crème brûlée" },
+      },
+    ] as unknown as QuartzPluginData[];
+    const html = renderedNodeHtml(
+      canvasData({ t1: { type: "root", children: [transclude("cafe/creme-brulee")] } }),
+      files,
+    ).t1!;
+    const hrefs = [...html.matchAll(/<p><a href="([^"]+)">x<\/a><\/p>/g)].map((m) => m[1]!);
+    expect(hrefs.map((h) => new URL(h, "https://example.com/board.canvas").pathname)).toEqual([
+      "/cafe/x",
+    ]);
+  });
+});
+
+/** The vnodes under `node` whose props match `pred`. */
+function findVnodes(
+  node: unknown,
+  pred: (props: Record<string, unknown>) => boolean,
+): { props: Record<string, unknown> }[] {
+  const out: { props: Record<string, unknown> }[] = [];
+  const walk = (n: unknown) => {
+    if (Array.isArray(n)) return n.forEach(walk);
+    if (!n || typeof n !== "object") return;
+    const props = (n as { props?: Record<string, unknown> }).props;
+    if (!props) return;
+    if (pred(props)) out.push(n as { props: Record<string, unknown> });
+    walk(props.children);
+  };
+  walk(node);
+  return out;
+}
+
+describe("heading sections with footnotes", () => {
+  // what GFM renders for "## A\na[^1]\n## B\nb[^2]\n\n[^1]: one\n[^2]: two"
+  const fnRef = (n: number) =>
+    el("sup", {}, [
+      el(
+        "a",
+        {
+          href: `#user-content-fn-${n}`,
+          id: `user-content-fnref-${n}`,
+          dataFootnoteRef: "",
+          ariaDescribedBy: "footnote-label",
+        },
+        [text(String(n))],
+      ),
+    ]);
+  const fnItem = (n: number, value: string) =>
+    el("li", { id: `user-content-fn-${n}` }, [
+      el("p", {}, [
+        text(`${value} `),
+        el(
+          "a",
+          {
+            href: `#user-content-fnref-${n}`,
+            dataFootnoteBackref: "",
+            ariaLabel: `Back to reference ${n}`,
+            className: ["data-footnote-backref"],
+          },
+          [text("↩")],
+        ),
+      ]),
+    ]);
+  const doc: HastRoot = {
+    type: "root",
+    children: [
+      el("h2", { id: "a" }, [text("A")]),
+      el("p", {}, [text("a"), fnRef(1)]),
+      el("h2", { id: "b" }, [text("B")]),
+      el("p", {}, [text("b"), fnRef(2)]),
+      el("section", { dataFootnotes: "", className: ["footnotes"] }, [
+        el("h2", { className: ["sr-only"], id: "footnote-label" }, [text("Footnotes")]),
+        el("ol", {}, [fnItem(1, "one"), fnItem(2, "two")]),
+      ]),
+    ],
+  };
+  const allFiles = [{ slug: "doc", htmlAst: doc } as unknown as QuartzPluginData];
+  const embed = (subpath: string) =>
+    resolveEmbeddedHtml("doc" as FullSlug, "board.canvas" as FullSlug, allFiles, subpath)!;
+  const footnoteIds = (html: string) =>
+    [...html.matchAll(/<li id="(user-content-fn-\d+)">/g)].map((m) => m[1]);
+
+  it("adds only the footnotes the section references", () => {
+    const html = embed("#A");
+    expect(html).not.toContain("<p>b");
+    expect(html.match(/<section data-footnotes/g)).toHaveLength(1);
+    expect(footnoteIds(html)).toEqual(["user-content-fn-1"]);
+  });
+
+  it("adds the footnotes section once to the last section, which runs into it", () => {
+    const html = embed("#B");
+    expect(html).not.toContain("<p>a");
+    expect(html.match(/<section data-footnotes/g)).toHaveLength(1);
+    expect(footnoteIds(html)).toEqual(["user-content-fn-2"]);
+  });
+});
+
+describe("canvas options", () => {
+  it('textNodeMarkdown: "basic" renders text nodes with basic Markdown despite site plugins', async () => {
+    const noop = { name: "Noop", markdownPlugins: () => [], htmlPlugins: () => [] };
+    const ctx = createCtx({
+      cfg: { configuration: {}, plugins: { transformers: [noop] } } as never,
+    });
+    ctx.allFiles = ["b.canvas" as FilePath];
+    const [page] = await CanvasPage({ textNodeMarkdown: "basic" }).generate!({
+      content: [],
+      cfg: ctx.cfg.configuration,
+      ctx,
+    });
+    const data = page!.data.canvasData as {
+      renderedTexts: Record<string, string>;
+      renderedTrees: Record<string, unknown>;
+    };
+    expect(data.renderedTrees).toEqual({});
+    expect(data.renderedTexts).toEqual({
+      "1": renderCanvasText("Hello", "b.canvas" as FullSlug, []),
+    });
+  });
+
+  it("sets the wheel behavior on the canvas container", () => {
+    const wheel = (opts?: Parameters<typeof CanvasBody>[0]) => {
+      const vnode = CanvasBody(opts)({
+        fileData: { slug: "b.canvas", canvasData: sampleCanvas } as unknown as QuartzPluginData,
+        allFiles: [],
+        cfg: {},
+      } as never);
+      return findVnodes(vnode, (p) => p.class === "canvas-container").map(
+        (v) => v.props["data-wheel-behavior"],
+      );
+    };
+    expect(wheel({ wheelBehavior: "zoom" })).toEqual(["zoom"]);
+    expect(wheel({ wheelBehavior: "pan" })).toEqual(["pan"]);
+    expect(wheel()).toEqual(["pan"]);
   });
 });
