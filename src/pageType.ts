@@ -226,5 +226,6 @@ export const CanvasPage: QuartzPageTypePlugin<CanvasPageOptions> = (opts) => ({
   },
   layout: "canvas",
   frame: "canvas",
-  body: CanvasBody,
+  // Quartz instantiates the body as `body(undefined)`, so the options are passed here
+  body: () => CanvasBody(opts),
 });
