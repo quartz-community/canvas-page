@@ -34,30 +34,12 @@ import {
 import style from "./styles/canvas.scss";
 // @ts-expect-error inline script import handled by bundler
 import script from "./scripts/canvas.inline.ts";
+import { edgeGeometry } from "./edgePath";
 
 function resolveColor(color?: string): string | undefined {
   if (!color) return undefined;
   if (color.startsWith("#")) return color;
   return CANVAS_PRESET_COLORS[color] ?? undefined;
-}
-
-function getEdgeAnchor(node: CanvasNode, side: string | undefined): { x: number; y: number } {
-  const border = node.type === "group" ? 2 : 2;
-  const cx = node.x + node.width / 2;
-  const cy = node.y + node.height / 2;
-
-  switch (side) {
-    case "top":
-      return { x: cx, y: node.y - border };
-    case "bottom":
-      return { x: cx, y: node.y + node.height + border };
-    case "left":
-      return { x: node.x - border, y: cy };
-    case "right":
-      return { x: node.x + node.width + border, y: cy };
-    default:
-      return { x: cx, y: cy };
-  }
 }
 
 /**
@@ -404,8 +386,9 @@ function renderEdge(edge: CanvasEdge, nodeMap: Map<string, CanvasNode>): unknown
   const toNode = nodeMap.get(edge.toNode);
   if (!fromNode || !toNode) return null;
 
-  const from = getEdgeAnchor(fromNode, edge.fromSide);
-  const to = getEdgeAnchor(toNode, edge.toSide);
+  const { d: pathD, mid } = edgeGeometry(fromNode, toNode, edge.fromSide, edge.toSide);
+  const midX = mid.x;
+  const midY = mid.y;
 
   const color = resolveColor(edge.color);
   const hasFromArrow = edge.fromEnd === "arrow";
@@ -413,12 +396,6 @@ function renderEdge(edge: CanvasEdge, nodeMap: Map<string, CanvasNode>): unknown
 
   const markerId = `arrow-${edge.id}`;
   const markerStartId = `arrow-start-${edge.id}`;
-
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const midX = from.x + dx / 2;
-  const midY = from.y + dy / 2;
-  const pathD = `M ${from.x} ${from.y} Q ${midX} ${from.y}, ${midX} ${midY} T ${to.x} ${to.y}`;
 
   return (
     <g class="canvas-edge" data-edge-id={edge.id}>

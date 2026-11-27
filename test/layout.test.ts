@@ -98,28 +98,50 @@ describe("canvas edges", () => {
   // a: 0…100 × 0…50, b: 300…400 × 200…250
   const nodes = [text("a", 0, 0), text("b", 300, 200)];
 
-  it("joins the sides it names, just outside the nodes' borders", () => {
+  // The curve's numbers are pinned against Obsidian in edgePath.test.ts; here: the rendered
+  // edge uses them, ending on the nodes' borders.
+  const ends = (d: unknown) => {
+    const n = String(d)
+      .match(/-?\d+(\.\d+)?/g)!
+      .map(Number);
+    return [n.slice(0, 2), n.slice(-2)];
+  };
+  it("joins the sides it names, on the nodes' borders", () => {
     const sides = (fromSide: string, toSide: string) =>
-      edgePath(
-        render({
-          nodes,
-          edges: [{ id: "e", fromNode: "a", toNode: "b", fromSide, toSide } as never],
-        }),
-        "e",
-      )!.d;
-    // from (100+2, 25) to (300-2, 225): a curve through the midpoint
-    expect(sides("right", "left")).toBe("M 102 25 Q 200 25, 200 125 T 298 225");
-    // from (50, 50+2) to (350, 200-2)
-    expect(sides("bottom", "top")).toBe("M 50 52 Q 200 52, 200 125 T 350 198");
-    // from (50, -2) to (400+2, 225)
-    expect(sides("top", "right")).toBe("M 50 -2 Q 226 -2, 226 111.5 T 402 225");
-    // from (-2, 25) to (350, 250+2)
-    expect(sides("left", "bottom")).toBe("M -2 25 Q 174 25, 174 138.5 T 350 252");
+      ends(
+        edgePath(
+          render({
+            nodes,
+            edges: [{ id: "e", fromNode: "a", toNode: "b", fromSide, toSide } as never],
+          }),
+          "e",
+        )!.d,
+      );
+    expect(sides("right", "left")).toEqual([
+      [100, 25],
+      [300, 225],
+    ]);
+    expect(sides("bottom", "top")).toEqual([
+      [50, 50],
+      [350, 200],
+    ]);
+    expect(sides("top", "right")).toEqual([
+      [50, 0],
+      [400, 225],
+    ]);
+    expect(sides("left", "bottom")).toEqual([
+      [0, 25],
+      [350, 250],
+    ]);
   });
 
-  it("joins the centres of nodes without sides", () => {
+  it("gives an edge without sides the sides facing each other, as Obsidian does", () => {
     const tree = render({ nodes, edges: [{ id: "e", fromNode: "a", toNode: "b" }] });
-    expect(edgePath(tree, "e")!.d).toBe("M 50 25 Q 200 25, 200 125 T 350 225");
+    // centres (50, 25) and (350, 225): 300/50 < 200/25, so bottom to top
+    expect(ends(edgePath(tree, "e")!.d)).toEqual([
+      [50, 50],
+      [350, 200],
+    ]);
   });
 
   it("draws an arrow at the end only, unless the ends say otherwise", () => {
