@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.5
+
+### Patch Changes
+
+- 0f45bd0: CanvasPage options (`enableInteraction`, `initialZoom`, `minZoom`, `maxZoom`, `wheelBehavior`) now take effect on canvas pages; they were ignored before, and `initialZoom` now scales the opening view that fits the whole canvas.
+
 ## 1.1.4
 
 ### Patch Changes
