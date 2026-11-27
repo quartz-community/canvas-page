@@ -92,16 +92,11 @@ function applySubpath(
   if (!ref) return htmlAst;
 
   if (isBasePage) {
-    // For .base files, #view-name selects a specific view by data-view-type or
-    // the view tab label. Walk the htmlAst to find the matching view div and
-    // return only that view, marked active.
-    const refLower = ref.toLowerCase();
-    for (const child of htmlAst.children) {
-      if (child.type !== "element") continue;
-      const found = findBasesView(child as HastElement, refLower);
-      if (found) return { type: "root", children: [found] };
-    }
-    return undefined;
+    // For .base files, #view-name selects a specific view by its name (the view tab's label, as
+    // bases-page's own embeds match it), else by its data-view-type. Only that view is returned,
+    // marked active (bases-page's stylesheet hides views without `is-active`).
+    const found = findBasesView(htmlAst, ref);
+    return found ? { type: "root", children: [found] } : undefined;
   }
 
   // Header transclude: the heading, then the content until the next heading of equal or lesser
@@ -118,18 +113,66 @@ function applySubpath(
   };
 }
 
-function findBasesView(el: HastElement, viewName: string): HastElement | undefined {
-  const classes = ((el.properties?.className ?? []) as string[]).join(" ");
-  if (classes.includes("bases-view") && !classes.includes("bases-view-container")) {
-    const viewType = (el.properties?.dataViewType as string) ?? "";
-    if (viewType.toLowerCase() === viewName) return el;
-  }
-  for (const child of el.children) {
+const classList = (el: HastElement): string[] => {
+  const className: unknown = el.properties?.className;
+  if (Array.isArray(className)) return className.map(String);
+  return typeof className === "string" ? className.split(/\s+/).filter(Boolean) : [];
+};
+
+const textOf = (node: HastRoot | ElementContent): string =>
+  node.type === "text"
+    ? node.value
+    : "children" in node
+      ? (node.children as ElementContent[]).map(textOf).join("")
+      : "";
+
+function* elementsOf(node: HastRoot | HastElement): Generator<HastElement> {
+  for (const child of node.children) {
     if (child.type !== "element") continue;
-    const found = findBasesView(child as HastElement, viewName);
-    if (found) return found;
+    yield child as HastElement;
+    yield* elementsOf(child as HastElement);
   }
-  return undefined;
+}
+
+// bases-page's `findEmbeddedView` slug: names match exactly, or by this slug when only an anchor is known
+const slugName = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]/g, "");
+
+/**
+ * The view of a rendered base that `ref` names, marked active: the view whose tab label is `ref`
+ * (exactly, else by slug), else the first view of type `ref`.
+ */
+function findBasesView(htmlAst: HastRoot, ref: string): HastElement | undefined {
+  const elements = [...elementsOf(htmlAst)];
+  const views = elements.filter((el) => {
+    const classes = classList(el);
+    return classes.includes("bases-view") && !classes.includes("bases-view-container");
+  });
+  const tabs = elements
+    .filter((el) => el.properties?.role === "tab" && el.properties?.dataViewIndex !== undefined)
+    .map((el) => ({ index: String(el.properties.dataViewIndex), name: textOf(el).trim() }));
+
+  const named =
+    tabs.find((tab) => tab.name === ref) ??
+    tabs.find((tab) => slugName(tab.name) !== "" && slugName(tab.name) === slugName(ref));
+  const view =
+    (named && views.find((el) => String(el.properties?.dataViewIndex) === named.index)) ??
+    views.find(
+      (el) => String(el.properties?.dataViewType ?? "").toLowerCase() === ref.toLowerCase(),
+    );
+  if (!view) return undefined;
+
+  const classes = classList(view);
+  return {
+    ...view,
+    properties: {
+      ...view.properties,
+      className: classes.includes("is-active") ? classes : [...classes, "is-active"],
+    },
+  };
 }
 
 /**
