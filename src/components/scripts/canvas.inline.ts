@@ -1,3 +1,5 @@
+import { initialViewZoom } from "../../util/zoom";
+
 function initCanvas() {
   const containers = document.querySelectorAll(".canvas-container") as NodeListOf<HTMLElement>;
   if (containers.length === 0) return;
@@ -13,7 +15,8 @@ function initCanvas() {
 
     const minZoom = parseFloat(container.dataset.minZoom ?? "") || 0.1;
     const maxZoom = parseFloat(container.dataset.maxZoom ?? "") || 5;
-    let zoom = parseFloat(container.dataset.initialZoom ?? "") || 1;
+    const initialZoom = parseFloat(container.dataset.initialZoom ?? "") || 1;
+    let zoom = initialZoom;
     let panX = 0;
     let panY = 0;
     let isPanning = false;
@@ -29,10 +32,15 @@ function initCanvas() {
       const vw = parseFloat(viewport.style.width) || 1000;
       const vh = parseFloat(viewport.style.height) || 1000;
 
-      const scaleX = containerRect.width / vw;
-      const scaleY = containerRect.height / vh;
-      zoom = Math.min(scaleX, scaleY, 1) * 0.9;
-      zoom = Math.max(minZoom, Math.min(maxZoom, zoom));
+      zoom = initialViewZoom(
+        containerRect.width,
+        containerRect.height,
+        vw,
+        vh,
+        initialZoom,
+        minZoom,
+        maxZoom,
+      );
 
       panX = (containerRect.width - vw * zoom) / 2;
       panY = (containerRect.height - vh * zoom) / 2;

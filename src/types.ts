@@ -115,7 +115,10 @@ export interface CanvasData {
 export interface CanvasPageOptions {
   /** Enable pan/zoom interaction on the canvas. Default: true */
   enableInteraction?: boolean;
-  /** Initial zoom level. Default: 1 */
+  /**
+   * The zoom the canvas opens at (and resets to), relative to the view that fits the whole
+   * canvas: `1` (default) shows it all, `2` opens twice as close. Clamped to minZoom/maxZoom.
+   */
   initialZoom?: number;
   /** Minimum zoom level. Default: 0.1 */
   minZoom?: number;

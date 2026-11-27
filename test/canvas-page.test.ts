@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { createCtx } from "./helpers";
 import { CanvasPage, createSiteTextRenderer, renderCanvasText } from "../src/pageType";
-import type { CanvasData } from "../src/types";
+import type { CanvasData, CanvasPageOptions } from "../src/types";
 import type {
   ProcessedContent,
   FullSlug,
@@ -12,6 +12,7 @@ import type { Root as HastRoot } from "hast";
 import CanvasBody, { resolveEmbeddedHtml } from "../src/components/CanvasBody";
 import { toHtml } from "hast-util-to-html";
 import { slugifyFilePath } from "@quartz-community/utils/path";
+import { initialViewZoom } from "../src/util/zoom";
 
 const sampleCanvas: CanvasData = {
   nodes: [
@@ -1100,5 +1101,93 @@ describe("canvas options", () => {
     expect(wheel({ wheelBehavior: "zoom" })).toEqual(["zoom"]);
     expect(wheel({ wheelBehavior: "pan" })).toEqual(["pan"]);
     expect(wheel()).toEqual(["pan"]);
+  });
+
+  // Quartz renders a page type's body as `pageType.body(undefined)`: the options must come
+  // from the page type itself
+  const renderPageBody = (opts?: CanvasPageOptions) =>
+    CanvasPage(opts).body(undefined)({
+      fileData: { slug: "b.canvas", canvasData: sampleCanvas } as unknown as QuartzPluginData,
+      allFiles: [],
+      cfg: {},
+    } as never);
+  const containerProps = (opts?: CanvasPageOptions) =>
+    findVnodes(renderPageBody(opts), (p) => p.class === "canvas-container").map((v) => ({
+      enableInteraction: v.props["data-enable-interaction"],
+      initialZoom: v.props["data-initial-zoom"],
+      minZoom: v.props["data-min-zoom"],
+      maxZoom: v.props["data-max-zoom"],
+      wheelBehavior: v.props["data-wheel-behavior"],
+    }));
+
+  it("the page type's body renders with the CanvasPage options, as Quartz calls it", () => {
+    expect(
+      containerProps({
+        enableInteraction: false,
+        initialZoom: 2,
+        minZoom: 0.5,
+        maxZoom: 3,
+        wheelBehavior: "zoom",
+      }),
+    ).toEqual([
+      {
+        enableInteraction: "false",
+        initialZoom: "2",
+        minZoom: "0.5",
+        maxZoom: "3",
+        wheelBehavior: "zoom",
+      },
+    ]);
+  });
+
+  it("the page type's body uses the defaults without options", () => {
+    expect(containerProps()).toEqual([
+      {
+        enableInteraction: "true",
+        initialZoom: "1",
+        minZoom: "0.1",
+        maxZoom: "5",
+        wheelBehavior: "pan",
+      },
+    ]);
+  });
+
+  it("enableInteraction: false leaves out the zoom buttons, keeps the fullscreen toggle", () => {
+    const classes = (opts?: CanvasPageOptions) =>
+      findVnodes(
+        renderPageBody(opts),
+        (p) => typeof p.class === "string" && p.class.startsWith("canvas-"),
+      )
+        .map((v) => v.props.class)
+        .filter((c) => /zoom|fullscreen-toggle/.test(String(c)));
+    expect(classes()).toEqual([
+      "canvas-zoom-group",
+      "canvas-zoom-in",
+      "canvas-zoom-out",
+      "canvas-fullscreen-toggle",
+    ]);
+    expect(classes({ enableInteraction: false })).toEqual(["canvas-fullscreen-toggle"]);
+  });
+});
+
+describe("initial view zoom", () => {
+  // container 1000x500, canvas 2000x500: fitting it takes 0.5, shown at 90% → 0.45
+  it("initialZoom 1 (default) shows the whole canvas, as before", () => {
+    expect(initialViewZoom(1000, 500, 2000, 500, 1, 0.1, 5)).toBeCloseTo(0.45);
+  });
+
+  it("initialZoom scales the fitted view", () => {
+    expect(initialViewZoom(1000, 500, 2000, 500, 2, 0.1, 5)).toBeCloseTo(0.9);
+    expect(initialViewZoom(1000, 500, 2000, 500, 0.5, 0.1, 5)).toBeCloseTo(0.225);
+  });
+
+  it("small canvases fit at most 1:1 before initialZoom applies", () => {
+    expect(initialViewZoom(1000, 1000, 100, 100, 1, 0.1, 5)).toBeCloseTo(0.9);
+    expect(initialViewZoom(1000, 1000, 100, 100, 3, 0.1, 5)).toBeCloseTo(2.7);
+  });
+
+  it("stays within minZoom and maxZoom", () => {
+    expect(initialViewZoom(1000, 500, 2000, 500, 1, 0.6, 5)).toBe(0.6);
+    expect(initialViewZoom(1000, 1000, 100, 100, 10, 0.1, 5)).toBe(5);
   });
 });
